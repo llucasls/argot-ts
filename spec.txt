@@ -1,0 +1,124 @@
+The configuration data is read from a configuration file read from
+readJSONConfig, readTOMLConfig or as an object passed to normalizeEntries. It
+will then be passed as input to the ArgParser constructor.
+
+The configuration object can be written as a key/value table, with the keys
+being option names and values being other tables describing configuration
+values for each option or an array of configuration entries, having the option
+parameter set to the name of the option. An option is considered to be a short
+option if its name has only one character and it is a long option otherwise.
+
+Each option should also have a type parameter with one of the following values
+as a string: 'flag', 'text', 'int', 'count', 'list' and 'alias'. Entries of
+type alias must also have a target, with the target being the name of another
+option. Options of type list may have a sep parameter, describing a separator
+to parse multiple values. If not specified, a comma is used by default.
+
+Options of type text and int may optionally receive a default paramater. If not
+specified, passing an extra argument to these options is mandatory. If a short
+option has a type text or int and it has a default parameter, then it will
+either parse the rest of the characters in the same argument as its own value
+or take the default value. The next argument is only used by string or int
+options that don't have a default parameter.
+
+Short options of type count options take a value equal to the number of times
+they are provided in the command-line. Long options of type count behave like
+int options with a default value of 1. Flag options, whether short or long,
+will set their values to true when provided.
+
+An alias option will behave following the type of its target option. An alias
+can always point to a short or long option of another type regardless of being
+a short or long option itself. An alias option can never point to another
+alias.
+
+Every option that is not provided on user input will have a null value.
+
+The main method of the ArgParser object is parse. It receives a list of strings
+as its sole parameter. This list represents the command-line arguments passed
+directly to the process.
+
+The argument list is checked if it is a list of strings. A boolean flag to
+indicate whether or not the following arguments will be parsed as options is
+initially set to false. This flag will be set to true in the first '--', at
+which point every following argument will be treated as an operand.
+
+A loop is started to iterate over every argument. If the stopParsing flag is
+false, the current argument is first tested if it matches a GNU-style long
+option. If it matches, the argument is passed to the parseLongOption method.
+
+The parseLongOption method takes an argument and returns the name of an option
+and the parsed value. The type of the parsed value depends on the option's
+configuration.
+
+The name and value are taken from the argument by regular expression. The name
+itself is mandatory, but the value is only taken from --name=value arguments.
+Otherwise, it is treated as null.
+
+The option name is used to query the option configuration entry from the config
+object. If it is undefined, an error is thrown. From the queried entry, the
+option's type is taken and matched against the list of types previously
+defined. The list type must take an extra argument. The text and int types
+demand an argument if they don't have a default parameter and can take an
+argument optionally otherwise.
+
+Upon returning an option name and value from parseLongOption, the pair will be
+stored as key and value in the options dictionary.
+
+If any argument is not recognized as a long option, it will then be matched for
+Unix-style short options.
+
+The parseShortOption method is called with the current argument and a reference
+to the next argument if it exists or null. It returns a tuple containing a flag
+telling the calling method whether the next argument should be skipped and a
+dictionary with pairs of option names and values.
+
+After the first character in the argument ('-') every other character will be
+parsed separately. If any character is the name of a single character option
+that can take an argument and it is not the last character in the argument
+string, remaining characters will then be collected into a separate string and
+parsed as an argument to the option. In this case, the flag returned will be
+false and the next argument reference will not be used. If the last option
+character in the argument is an option that takes an argument, then the next
+argument will be used as an argument to the option. If no option takes an
+argument or if the last option takes an optional argument then the next
+argument will be ignored.
+
+Each option character will be queried in the configuration object and throw an
+error if no value is found, like in parseLongOption. Unlike in parseLongOption,
+in parseShortOption count options do not take any arguments. They instead work
+like a flag that can be called multiple times, with the final value being the
+number of times the count option was provided. The int, list and text types
+require an argument. If the option name is the final character in the argument
+string and there is no next argument, an error will be thrown. Flag options
+take no arguments, so the next argument is ignored. If any character is the
+name of an int or text option with a default value, remaining characters will
+be treated as an argument if present, or the default value will be used
+otherwise. The next argument is always ignored for these two types.
+
+The parseShortOption method returns a flag and a dictionary. The flag will be
+set to true if the next argument was consumed and false otherwise. The
+dictionary will be merged with other parsed options in the parse method, where
+all parsed options are stored together, list options with the same name get
+merged, count options are summed to a total integer, alias options are
+stored as callbacks and aliases to list options are stored as arrays of
+callbacks. The single callbacks and callback arrays will be resolved after all
+arguments are parsed.
+
+If any argument is not a long option nor a short option, it will then be
+checked for a name=value assignment. If it is a match, the name and value will
+be stored in a parameters dictionary.
+
+If an argument does not match long options, short options or parameter,
+assignments it will be considered an operand. If the stopParsing flag is true,
+every argument will be an operand regardless of its form. Operand arguments are
+stored in an array. The first '--' argument that stops option parsing is not
+stored in the operands array.
+
+After every argument is parsed and stored, an iteration starts over the options
+dictionary. If any parsed value is a function, it is called and its values are
+taken as a target option configuration and a parsed value. The type of the
+stored value depends on the type of the target option.
+
+If any option has a list of functions as a value, it will be an alias to a list
+option, in which case it will be resolved to a list of strings with the same
+size.
