@@ -5,7 +5,7 @@ import { validateNumber } from './utils.ts';
 abstract class ArgParserResult<K, V> extends Map<K, V> {
   protected frozen = false;
 
-  constructor(entries: [K, V][]) {
+  constructor(entries?: [K, V][]) {
     super(entries);
     Object.defineProperty(this, 'frozen', {
       writable: true,
@@ -131,7 +131,7 @@ export class ArgParser {
 
     const result = { options, parameters, operands } as const;
 
-    return result;
+    return Object.freeze(result);
   }
 
   private parseLongOption(arg: string): [string, t.OptionValue] {
