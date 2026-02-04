@@ -1,22 +1,23 @@
 import * as toml from '@std/toml';
+import { validateEntries } from './utils.ts';
 import type { ConfigEntry, LabeledEntry } from './types.ts';
 
 export function readJSONConfig(
   configFile: string
-): LabeledEntry[] | Record<string, ConfigEntry> {
-  return JSON.parse(Deno.readTextFileSync(configFile));
+): Record<string, ConfigEntry> {
+  return normalizeEntries(JSON.parse(Deno.readTextFileSync(configFile)));
 }
 
 export function readTOMLConfig(
   configFile: string
-): LabeledEntry[] | Record<string, ConfigEntry> {
+): Record<string, ConfigEntry> {
   const result = toml.parse(Deno.readTextFileSync(configFile));
 
   if (Array.isArray(result.entries)) {
-    return result.entries as LabeledEntry[];
+    return normalizeEntries(result.entries);
   }
 
-  return result.entries as Record<string, ConfigEntry>;
+  return normalizeEntries(result.entries as Record<string, ConfigEntry>);
 }
 
 export function normalizeEntries(
@@ -35,6 +36,7 @@ export function normalizeEntries(
 
     const descriptors = Object.getOwnPropertyDescriptors(entryList);
     const output = Object.create(null, descriptors);
+    validateEntries(output);
     return Object.freeze(output);
   }
 
@@ -49,5 +51,6 @@ export function normalizeEntries(
     output[option] = entryConfig;
   }
 
+  validateEntries(output);
   return Object.freeze(output);
 }
