@@ -1,5 +1,12 @@
 import { InvalidIntError } from './errors.ts';
-import type { ConfigEntry, OptionType, AliasEntry } from './types.ts';
+import type {
+  ConfigEntry,
+  OptionType,
+  AliasEntry,
+  LabeledEntry,
+  TextEntry,
+  ListEntry,
+} from './types.ts';
 
 export function validateNumber(value: string): void {
   if (Number.isNaN(Number(value))) {
@@ -8,7 +15,7 @@ export function validateNumber(value: string): void {
   }
 }
 
-export function validateEntry(entry: ConfigEntry): void {
+export function validateEntry(entry: LabeledEntry): void {
   if (entry == null || typeof entry !== 'object') {
     throw new TypeError('option config entry must be an object');
   }
@@ -26,17 +33,47 @@ export function validateEntry(entry: ConfigEntry): void {
       /* these types have no extra mandatory values */
       break;
     }
-    case 'text':
-    case 'int':
+    case 'text': {
+      if (!Object.hasOwn(entry, 'default'))
+        break;
+
+      const { default: def } = entry as TextEntry;
+      if (typeof def !== 'string')
+        throw new TypeError('default value must be a string');
+
+      break;
+    }
+    case 'int': {
+      if (!Object.hasOwn(entry, 'default'))
+        break;
+
+      const { default: def } = entry as TextEntry;
+     if (typeof def !== 'number' || !Number.isInteger(def))
+        throw new TypeError('default value must be an integer');
+
+      break;
+    }
     case 'list': {
+      if (!Object.hasOwn(entry, 'sep'))
+        break;
+
+      const { sep } = entry as ListEntry;
+      if (typeof sep !== 'string')
+        throw new TypeError('sep value must be a string');
+
       break;
     }
     case 'alias': {
       if (!Object.hasOwn(entry, 'target')) {
-        const { target } = entry as AliasEntry;
-        const msg = `'target' not found in alias option ${target}`;
+        const { option } = entry;
+        const msg = `'target' not found in alias option ${option}`;
         throw new Error(msg);
       }
+
+      const { target } = entry as AliasEntry;
+      if (typeof target !== 'string')
+        throw new TypeError('target value must be a string');
+
       break;
     }
     default: {
@@ -47,21 +84,21 @@ export function validateEntry(entry: ConfigEntry): void {
 }
 
 export function validateEntries(
-  entries: Record<string, Omit<ConfigEntry, 'option'>>
+  entries: Record<string, ConfigEntry>
 ): void {
-  const aliases = new Map();
+  const aliases: [string, string][] = [];
 
   for (const [option, config] of Object.entries(entries)) {
-    const entry = { option, ...config } as ConfigEntry;
+    const entry = { option, ...config } as LabeledEntry;
     validateEntry(entry);
     const tag: OptionType = entry.type;
     if (tag === 'alias') {
       const { target } = entry as AliasEntry;
-      aliases.set(option, target);
+      aliases.push([option, target]);
     }
   }
 
-  for (const [name, target] of aliases.entries()) {
+  for (const [name, target] of aliases) {
     if (!Object.hasOwn(entries, target)) {
       throw new Error(
         `target value '${target}' for option '${name}' was not found`
