@@ -6,13 +6,20 @@ export type OptionType =
   | 'list'
   | 'alias';
 
+export type FlagEntry = { type: 'flag' };
+export type TextEntry = { type: 'text'; default?: string };
+export type IntEntry = { type: 'int'; default?: number };
+export type CountEntry = { type: 'count' };
+export type ListEntry = { type: 'list'; sep?: string };
+export type AliasEntry = { type: 'alias'; target: string };
+
 export type ConfigEntry = (
-  | { type: 'flag' }
-  | { type: 'text'; default?: string }
-  | { type: 'int'; default?: number }
-  | { type: 'count' }
-  | { type: 'list'; sep?: string }
-  | { type: 'alias'; target: string }
+  | FlagEntry
+  | TextEntry
+  | IntEntry
+  | CountEntry
+  | ListEntry
+  | AliasEntry
 );
 
 export type LabeledEntry = { option: string } & ConfigEntry;
@@ -22,10 +29,3 @@ export type OptionValue =
   | string
   | number
   | string[];
-
-export type FlagEntry = Extract<ConfigEntry, { type: 'flag' }>;
-export type TextEntry = Extract<ConfigEntry, { type: 'text' }>;
-export type IntEntry = Extract<ConfigEntry, { type: 'int' }>;
-export type CountEntry = Extract<ConfigEntry, { type: 'count' }>;
-export type ListEntry = Extract<ConfigEntry, { type: 'list' }>;
-export type AliasEntry = Extract<ConfigEntry, { type: 'alias' }>;
