@@ -1,17 +1,22 @@
+import fs from 'node:fs';
 import * as toml from '@std/toml';
 import { validateEntries } from './utils.ts';
 import type { ConfigEntry, LabeledEntry } from './types.ts';
 
+function readTextFileSync(path: string | URL): string {
+  return fs.readFileSync(path, { encoding: 'utf8' });
+}
+
 export function readJSONConfig(
   configFile: string
 ): Record<string, ConfigEntry> {
-  return normalizeEntries(JSON.parse(Deno.readTextFileSync(configFile)));
+  return normalizeEntries(JSON.parse(readTextFileSync(configFile)));
 }
 
 export function readTOMLConfig(
   configFile: string
 ): Record<string, ConfigEntry> {
-  const result = toml.parse(Deno.readTextFileSync(configFile));
+  const result = toml.parse(readTextFileSync(configFile));
 
   if (Array.isArray(result.entries)) {
     return normalizeEntries(result.entries);
