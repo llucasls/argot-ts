@@ -2,49 +2,6 @@ import type * as t from './types.ts';
 import { NullArgError, NullIntError } from './errors.ts';
 import { validateNumber } from './utils.ts';
 
-abstract class ArgParserResult<K, V> extends Map<K, V> {
-  protected frozen = false;
-
-  constructor(entries?: [K, V][]) {
-    super(entries);
-    Object.defineProperty(this, 'frozen', {
-      writable: true,
-      enumerable: false,
-    });
-  }
-
-  override set(key: K, value: V): this {
-    if (this.frozen)
-      throw new TypeError('you cannot modify option values');
-    return super.set(key, value);
-  }
-
-  override delete(key: K): boolean {
-    if (this.frozen)
-      throw new TypeError('you cannot delete parsed options');
-    return super.delete(key);
-  }
-
-  override clear(): void {
-    if (this.frozen)
-      throw new TypeError('you cannot delete parsed options');
-    super.clear();
-  }
-
-  public freeze() {
-    this.frozen = true;
-    Object.freeze(this);
-  }
-
-  public toJSON(): Record<string, V> {
-    return Object.fromEntries(this.entries());
-  }
-}
-
-class Options extends ArgParserResult<string, t.OptionValue> {}
-class Parameters extends ArgParserResult<string, string> {}
-class Operands extends Array<string> {}
-
 export class ArgParser {
   private longOptExp: RegExp = /^--/;
   private shortOptExp: RegExp = /^-[^-]/;
@@ -61,7 +18,7 @@ export class ArgParser {
     parameters: Parameters,
     operands: Operands,
   } {
-    // options: short options and GNU-style long options
+    // options: parsed option values
     const options = new Options();
 
     // parameters: name=value variable assignments
@@ -128,6 +85,10 @@ export class ArgParser {
         operands.push(arg);
       }
     }
+
+    options.freeze();
+    parameters.freeze();
+    Object.freeze(operands);
 
     const result = { options, parameters, operands } as const;
 
