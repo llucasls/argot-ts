@@ -5,8 +5,17 @@ import type {
   AliasEntry,
   LabeledEntry,
   TextEntry,
+  IntEntry,
   ListEntry,
 } from './types.ts';
+
+export function parseIntStrict(value: string): number {
+  if (!/^-?\d+$/.test(value)) {
+    throw new InvalidIntError(`'${value}' is not a valid number`);
+  }
+
+  return Number(value);
+}
 
 export function validateNumber(value: string): void {
   if (Number.isNaN(Number(value))) {
@@ -47,7 +56,7 @@ export function validateEntry(entry: LabeledEntry): void {
       if (!Object.hasOwn(entry, 'default'))
         break;
 
-      const { default: def } = entry as TextEntry;
+      const { default: def } = entry as IntEntry;
      if (typeof def !== 'number' || !Number.isInteger(def))
         throw new TypeError('default value must be an integer');
 

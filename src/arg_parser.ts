@@ -13,11 +13,7 @@ export class ArgParser {
     this.configs = configs;
   }
 
-  public parse(argList: string[]): {
-    options: Options,
-    parameters: Parameters,
-    operands: Operands,
-  } {
+  public parse(argList: string[]): Readonly<t.ParseResult> {
     // options: parsed option values
     const options = new Options();
 

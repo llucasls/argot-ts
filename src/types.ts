@@ -24,6 +24,8 @@ export type ConfigEntry = (
 
 export type LabeledEntry = { option: string } & ConfigEntry;
 
+export type ConfigEntries = Record<string, ConfigEntry> | LabeledEntry[];
+
 export type OptionValue = boolean | string | number | string[];
 
 abstract class ResultMapping<K, V> extends Map<K, V> {
@@ -72,3 +74,9 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
 export class Options extends ResultMapping<string, OptionValue> {}
 export class Parameters extends ResultMapping<string, string> {}
 export class Operands extends Array<string> {}
+
+export interface ParseResult {
+  options: Options;
+  parameters: Parameters;
+  operands: Operands;
+}
