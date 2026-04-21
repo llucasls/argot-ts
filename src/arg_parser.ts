@@ -159,7 +159,7 @@ export class ArgParser {
           case 'text': {
             if (value != null) {
               return [target, value];
-            } else if (Object.hasOwn(entry, 'default')) {
+            } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as t.TextEntry;
               return [target, value!];
             }
@@ -170,7 +170,7 @@ export class ArgParser {
             if (value != null && value !== '') {
               validateNumber(value);
               return [target, Number(value)];
-            } else if (Object.hasOwn(entry, 'default')) {
+            } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as t.IntEntry;
               return [target, Number(value)];
             }
