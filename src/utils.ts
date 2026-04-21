@@ -9,19 +9,16 @@ import type {
   ListEntry,
 } from './types.ts';
 
-export function parseIntStrict(value: string): number {
+export function parseIntStrict(value: string | number): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+
   if (!/^-?\d+$/.test(value)) {
-    throw new InvalidIntError(`'${value}' is not a valid number`);
+    throw new InvalidIntError(`'${value}' is not a valid integer`);
   }
 
   return Number(value);
-}
-
-export function validateNumber(value: string): void {
-  if (Number.isNaN(Number(value))) {
-    const msg = `'${value}' is not a valid number`;
-    throw new InvalidIntError(msg);
-  }
 }
 
 export function validateEntry(entry: LabeledEntry): void {
@@ -57,7 +54,7 @@ export function validateEntry(entry: LabeledEntry): void {
         break;
 
       const { default: def } = entry as IntEntry;
-     if (typeof def !== 'number' || !Number.isInteger(def))
+      if (typeof def !== 'number' || !Number.isInteger(def))
         throw new TypeError('default value must be an integer');
 
       break;

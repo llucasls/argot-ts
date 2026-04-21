@@ -1,15 +1,17 @@
 import type * as t from './types.ts';
+import type { ParserConfig } from './parser_config.ts';
+import { Options, Parameters, Operands } from './types.ts';
 import { NullArgError, NullIntError } from './errors.ts';
-import { validateNumber } from './utils.ts';
+import { parseIntStrict } from './utils.ts';
 
 export class ArgParser {
   private longOptExp: RegExp = /^--/;
   private shortOptExp: RegExp = /^-[^-]/;
   private assignmentExp: RegExp = /^--([^=]+)=(.+)?/d;
   private parameterExp: RegExp = /^([^=]+)=(.+)?/d;
-  private configs: Record<string, t.ConfigEntry>;
+  private configs: ParserConfig;
 
-  constructor(configs: Record<string, t.ConfigEntry>) {
+  constructor(configs: ParserConfig) {
     this.configs = configs;
   }
 
@@ -43,11 +45,11 @@ export class ArgParser {
 
       if (this.longOptExp.test(arg)) {
         const [name, value] = this.parseLongOption(arg);
-        if (this.configs[name].type === 'count') {
+        if (this.configs.get(name).type === 'count') {
           const oldValue = options.get(name) as number ?? 0;
           const newValue = value as number;
           options.set(name, oldValue + newValue);
-        } else if (this.configs[name].type === 'list') {
+        } else if (this.configs.get(name).type === 'list') {
           const oldValue = options.get(name) as string[] ?? [];
           const newValue = value as string[];
           options.set(name, oldValue.concat(newValue));
@@ -60,11 +62,11 @@ export class ArgParser {
           pairs,
         ] = this.parseShortOption(arg, argList[i+1] ?? null);
         for (const [name, value] of Object.entries(pairs)) {
-          if (this.configs[name].type === 'count') {
+          if (this.configs.get(name).type === 'count') {
             const oldValue = options.get(name) as number ?? 0;
             const newValue = value as number;
             options.set(name, oldValue + newValue);
-          } else if (this.configs[name].type === 'list') {
+          } else if (this.configs.get(name).type === 'list') {
             const oldValue = options.get(name) as string[] ?? [];
             const newValue = value as string[];
             options.set(name, oldValue.concat(newValue));
@@ -105,7 +107,7 @@ export class ArgParser {
       value = null;
     }
 
-    const entry: t.ConfigEntry = this.configs[name];
+    const entry: t.ConfigEntry = this.configs.get(name);
     const tag: t.OptionType = entry.type;
 
     switch (tag) {
@@ -124,19 +126,18 @@ export class ArgParser {
       }
       case 'int': {
         if (value != null && value !== '') {
-          validateNumber(value);
-          return [name, Number(value)];
+          return [name, parseIntStrict(value)];
         } else if (Object.hasOwn(entry, 'default')) {
           const { default: value } = entry as t.IntEntry;
-          return [name, Number(value)];
+          return [name, value!];
         }
 
         throw new NullIntError(name);
       }
       case 'count': {
         if (value != null)
-          validateNumber(value);
-        return [name, Number(value ?? 1)];
+          return [name, parseIntStrict(value)];
+        return [name, 1];
       }
       case 'list': {
         if (value === '') {
@@ -149,7 +150,7 @@ export class ArgParser {
       }
       case 'alias': {
         const { target } = entry as t.AliasEntry;
-        const targetEntry: t.ConfigEntry = this.configs[target];
+        const targetEntry: t.ConfigEntry = this.configs.get(target);
         const targetType: t.OptionType = targetEntry.type;
 
         switch (targetType) {
@@ -168,19 +169,18 @@ export class ArgParser {
           }
           case 'int': {
             if (value != null && value !== '') {
-              validateNumber(value);
-              return [target, Number(value)];
+              return [target, parseIntStrict(value)];
             } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as t.IntEntry;
-              return [target, Number(value)];
+              return [target, value!];
             }
 
             throw new NullIntError(name, target);
           }
           case 'count': {
             if (value != null)
-              validateNumber(value);
-            return [target, Number(value ?? 1)];
+              return [target, parseIntStrict(value)];
+            return [target, 1];
           }
           case 'list': {
             if (value === '') {
@@ -191,13 +191,10 @@ export class ArgParser {
             }
             throw new NullArgError(name, target);
           }
-          default: {
-            throw new Error(`type '${targetType}' is not supported`);
+          case 'alias': {
+            throw new Error('alias cannot target another alias');
           }
         }
-      }
-      default: {
-        throw new Error(`type '${tag}' is not supported`);
       }
     }
   }
@@ -215,7 +212,7 @@ export class ArgParser {
     for (let i = 1, n = arg.length; i < n; i++) {
       name = arg[i] as string;
       value = nextArg ?? null;
-      entry = this.configs[name];
+      entry = this.configs.get(name);
       const tag: t.OptionType = entry.type;
 
       switch (tag) {
@@ -242,17 +239,14 @@ export class ArgParser {
         case 'int': {
           if (i < n - 1) {
             value = arg.slice(i + 1, n);
-            validateNumber(value);
-            pairs[name] = Number(value);
+            pairs[name] = parseIntStrict(value);
             return [false, pairs];
           } else if (Object.hasOwn(entry, 'default')) {
             const { default: value } = entry as t.TextEntry;
-            validateNumber(value!);
-            pairs[name] = Number(value);
+            pairs[name] = parseIntStrict(value!);
             return [false, pairs];
           } else if (value != null) {
-            validateNumber(value);
-            pairs[name] = Number(value);
+            pairs[name] = parseIntStrict(value);
             return [true, pairs];
           }
 
@@ -282,7 +276,7 @@ export class ArgParser {
         }
         case 'alias': {
           const { target } = entry as t.AliasEntry;
-          const targetEntry: t.ConfigEntry = this.configs[target];
+          const targetEntry: t.ConfigEntry = this.configs.get(target);
           const targetType: t.OptionType = targetEntry.type;
 
           switch (targetType) {
@@ -309,17 +303,14 @@ export class ArgParser {
             case 'int': {
               if (i < n - 1) {
                 value = arg.slice(i + 1, n);
-                validateNumber(value);
-                pairs[target] = Number(value);
+                pairs[target] = parseIntStrict(value);
                 return [false, pairs];
               } else if (Object.hasOwn(targetEntry, 'default')) {
                 const { default: value } = targetEntry as t.TextEntry;
-                validateNumber(value!);
-                pairs[target] = Number(value);
+                pairs[target] = parseIntStrict(value!);
                 return [false, pairs];
               } else if (value != null) {
-                validateNumber(value);
-                pairs[target] = Number(value);
+                pairs[target] = parseIntStrict(value);
                 return [true, pairs];
               }
 
@@ -347,14 +338,10 @@ export class ArgParser {
 
               throw new NullArgError(name, target);
             }
-            default: {
-              throw new Error(`type ${targetType} is not supported`);
+            case 'alias': {
+              throw new Error('alias cannot target another alias');
             }
           }
-          break;
-        }
-        default: {
-          throw new Error(`type ${tag} is not supported`);
         }
       }
     }

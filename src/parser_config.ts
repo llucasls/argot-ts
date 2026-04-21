@@ -1,56 +1,62 @@
+import type { ConfigEntry, ConfigEntries } from './types.ts';
 import { validateEntries } from './utils.ts';
 
 export class ParserConfig {
-  private _entries: Record<string, ConfigEntry>;
+  #entries: Record<string, ConfigEntry>;
+  #size: number;
 
   constructor(entries: ConfigEntries) {
+    this.#size = 0;
+
     if (Array.isArray(entries)) {
       const entryMap = Object.create(null);
       for (const labeledEntry of entries) {
         const { option: name, ...newEntry } = labeledEntry;
         entryMap[name] = Object.freeze(newEntry);
+        this.#size += 1;
       }
-      this._entries = entryMap;
+      this.#entries = entryMap;
     } else if (entries && typeof entries === 'object') {
       const entryMap = Object.create(null);
-      for (const [name, newEntry] of Object.values(entries)) {
-        entryMap[name] = Object.freeze(newEntry);
+      for (const [key, value] of Object.entries(entries)) {
+        entryMap[key] = Object.freeze({ ...value });
+        this.#size += 1;
       }
-      this._entries = entryMap;
+      this.#entries = entryMap;
     } else {
       throw new TypeError('input value must be an array or object');
     }
 
-    validateEntries(this._entries);
-    Object.freeze(this._entries);
+    validateEntries(this.#entries);
+    Object.freeze(this.#entries);
     Object.freeze(this);
   }
 
   public entries(): Iterable<[string, ConfigEntry]> {
-    return Object.entries(this._entries);
+    return Object.entries(this.#entries);
   }
 
   public get(key: string): ConfigEntry {
-    return this._entries[key];
+    return this.#entries[key];
   }
 
   public has(key: string): boolean {
-    return Object.hasOwn(this._entries, key);
+    return Object.hasOwn(this.#entries, key);
   }
 
   public keys(): Iterable<string> {
-    return Object.keys(this._entries);
+    return Object.keys(this.#entries);
   }
 
   public values(): Iterable<ConfigEntry> {
-    return Object.values(this._entries);
+    return Object.values(this.#entries);
   }
 
   public toJSON(): Record<string, ConfigEntry> {
-    return this._entries;
+    return this.#entries;
   }
 
   get size(): number {
-    return Object.keys(this._entries).length;
+    return this.#size;
   }
 }

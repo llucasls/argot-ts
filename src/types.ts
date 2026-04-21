@@ -71,9 +71,33 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
   }
 }
 
+abstract class ResultList<T> extends Array<T> {
+  constructor(args?: T[]) {
+    const n = (args as T[])?.length ?? 0;
+    super(n);
+    for (let i = 0; i < n; i++) {
+      this[i] = (args as T[])[i];
+    }
+
+    return new Proxy(this, {
+      set(target, prop, value) {
+        if (prop === 'length') {
+          target[prop] = value;
+          return true;
+        } else if (String(Number(prop)) === prop) {
+          target[Number(prop)] = value;
+          return true;
+        }
+
+        throw new TypeError(`Cannot add non-index property: ${String(prop)}`);
+      }
+    });
+  }
+}
+
 export class Options extends ResultMapping<string, OptionValue> {}
 export class Parameters extends ResultMapping<string, string> {}
-export class Operands extends Array<string> {}
+export class Operands extends ResultList<string> {}
 
 export interface ParseResult {
   options: Options;
