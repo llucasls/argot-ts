@@ -242,7 +242,7 @@ export class ArgParser {
             pairs[name] = parseIntStrict(value);
             return [false, pairs];
           } else if (Object.hasOwn(entry, 'default')) {
-            const { default: value } = entry as t.TextEntry;
+            const { default: value } = entry as t.IntEntry;
             pairs[name] = parseIntStrict(value!);
             return [false, pairs];
           } else if (value != null) {
@@ -306,7 +306,7 @@ export class ArgParser {
                 pairs[target] = parseIntStrict(value);
                 return [false, pairs];
               } else if (Object.hasOwn(targetEntry, 'default')) {
-                const { default: value } = targetEntry as t.TextEntry;
+                const { default: value } = targetEntry as t.IntEntry;
                 pairs[target] = parseIntStrict(value!);
                 return [false, pairs];
               } else if (value != null) {
