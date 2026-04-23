@@ -3,6 +3,7 @@ import { describe, test } from '@std/testing/bdd';
 
 import { ParserConfig } from '../src/parser_config.ts';
 import type { ConfigEntries } from '../src/types.ts';
+import { InvalidAliasTargetError } from '../src/errors.ts';
 
 describe('test ParserConfig', () => {
   const parserConfig = new ParserConfig({
@@ -38,6 +39,16 @@ describe('test ParserConfig', () => {
     expect(() => {
       new ParserConfig(null!);
     }).toThrow(TypeError);
+  });
+
+  test('throw error on alias chains', () => {
+    expect(() => {
+      new ParserConfig({
+        version: { type: 'int' },
+        v: { type: 'alias', target: 'version' },
+        V: { type: 'alias', target: 'v' },
+      });
+    }).toThrow(InvalidAliasTargetError);
   });
 
   test('read properties from ParserConfig object', () => {

@@ -6,7 +6,7 @@ import { ArgParser } from '../src/arg_parser.ts';
 import { ParserConfig } from '../src/parser_config.ts';
 import type { ConfigEntries } from '../src/types.ts';
 import { Options, Parameters, Operands } from '../src/types.ts';
-import { NullArgError, NullIntError } from '../src/errors.ts';
+import { NullArgError, NullIntError, UnknownOptionError } from '../src/errors.ts';
 
 describe('test ArgParser', () => {
   const entries: ConfigEntries = {
@@ -63,6 +63,9 @@ describe('test ArgParser', () => {
   test('throw error on invalid input type', () => {
     expect(() => {
       parser.parse('spec.txt' as unknown as string[]);
+    }).toThrow(TypeError);
+    expect(() => {
+      parser.parse([1, 2] as unknown as string[]);
     }).toThrow(TypeError);
   });
 
@@ -305,5 +308,14 @@ describe('test ArgParser', () => {
     };
 
     assertMappingEquals(result.options, expected);
-  })
+  });
+
+  test('throw error on unsupported options', () => {
+    expect(() => {
+      parser.parse(['esto', '--non-ecxiste']);
+    }).toThrow(UnknownOptionError);
+    expect(() => {
+      parser.parse(['-Z']);
+    }).toThrow(UnknownOptionError);
+  });
 });
