@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.0-rc.1 -- 2026-04-23
+## v0.3.0 -- 2026-04-23
 - Added new error types for clearer distinction between runtime and
 configuration errors.
 - Deprecated `LabeledEntry`; option names should now be defined as object keys
