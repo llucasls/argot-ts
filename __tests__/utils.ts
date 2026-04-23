@@ -7,7 +7,7 @@ import {
   validateEntries,
 } from '../src/utils.ts';
 import { InvalidIntError } from '../src/errors.ts';
-import type { LabeledEntry, ConfigEntries } from '../src/types.ts';
+import type { ConfigEntry, ConfigEntries } from '../src/types.ts';
 
 describe('test parseIntStrict', () => {
   test('parse positive integer', () => {
@@ -40,76 +40,70 @@ describe('test parseIntStrict', () => {
 });
 
 describe('test validateEntry', () => {
-  test('throw error on null input', () => {
+  test('throw error on null entry', () => {
     expect(() => {
-      validateEntry(null!);
+      validateEntry('z', null!);
     }).toThrow(TypeError);
   });
 
   test('throw error on non-object input', () => {
     expect(() => {
-      validateEntry(4 as unknown as LabeledEntry);
+      validateEntry('n', 4 as unknown as ConfigEntry);
     }).toThrow(TypeError);
-  });
-
-  test('throw error if entry does not have option', () => {
-    expect(() => {
-      validateEntry({ type: 'flag' } as LabeledEntry);
-    }).toThrow(Error);
   });
 
   test('throw error if entry does not have type', () => {
     expect(() => {
-      validateEntry({ option: 'x' } as LabeledEntry);
+      validateEntry('a', { target: 'x' } as ConfigEntry);
     }).toThrow(Error);
   });
 
   test('throw error if text default value is not a string', () => {
-    const entry = { option: 'file', type: 'text', default: ['config.json'] };
+    const entry = { type: 'text', default: ['config.json'] };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('file', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 
   test('throw error if int default value is not a number', () => {
-    const entry = { option: 'jobs', type: 'int', default: true };
+    const entry = { type: 'int', default: true };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('jobs', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 
   test('throw error if int default value is not an integer', () => {
-    const entry = { option: 'jobs', type: 'int', default: 12.5 };
+    const entry = { type: 'int', default: 12.5 };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('jobs', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 
   test('throw error if list sep value is not a string', () => {
-    const entry = { option: 'tasks', type: 'list', sep: 33 };
+    const entry = { type: 'list', sep: 33 };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('tasks', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 
   test('throw error on alias without a target', () => {
-    const entry = { option: 't', type: 'alias' };
+    const entry = { type: 'alias' };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('u', entry as ConfigEntry);
     }).toThrow(Error);
   });
 
   test('throw error if alias target value is not a string', () => {
-    const entry = { option: 't', type: 'alias', target: 7 };
+    const entry = { type: 'alias', target: 7 };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('v', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 
   test('throw error on unknown type', () => {
-    const entry = { option: 't', type: 'string' };
+    const entry = { type: 'string' };
     expect(() => {
-      validateEntry(entry as LabeledEntry);
+      validateEntry('version', entry as ConfigEntry);
     }).toThrow(Error);
   });
 });

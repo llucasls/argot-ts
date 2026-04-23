@@ -52,14 +52,11 @@ export function parseIntStrict(value: string): number {
  * - MissingOptionPropertyError if a required property is missing
  * - InvalidOptionTypeError if the option type is not supported
  */
-export function validateEntry(entry: LabeledEntry): void {
+export function validateEntry(name: string, entry: ConfigEntry): void {
   if (entry == null || typeof entry !== 'object') {
     throw new TypeError('option config entry must be an object');
-  }
-  for (const key of ['option', 'type']) {
-    if (!Object.hasOwn(entry, key)) {
-      throw new Error(`'${key}' not found in config entry`);
-    }
+  } else if (!Object.hasOwn(entry, 'type')) {
+    throw new MissingOptionTypeError(name);
   }
 
   const tag: OptionType = entry.type;
@@ -102,8 +99,7 @@ export function validateEntry(entry: LabeledEntry): void {
     }
     case 'alias': {
       if (!Object.hasOwn(entry, 'target')) {
-        const { option } = entry;
-        throw new MissingOptionPropertyError(option, 'target');
+        throw new MissingOptionPropertyError(name, 'target');
       }
 
       const { target } = entry as AliasEntry;
@@ -136,13 +132,12 @@ export function validateEntries(
 ): void {
   const aliases: [string, string][] = [];
 
-  for (const [option, config] of Object.entries(entries)) {
-    const entry = { option, ...config } as LabeledEntry;
-    validateEntry(entry);
+  for (const [name, entry] of Object.entries(entries)) {
+    validateEntry(name, entry);
     const tag: OptionType = entry.type;
     if (tag === 'alias') {
       const { target } = entry as AliasEntry;
-      aliases.push([option, target]);
+      aliases.push([name, target]);
     }
   }
 

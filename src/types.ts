@@ -86,6 +86,9 @@ export type ConfigEntry = (
   | AliasEntry
 );
 
+/**
+ * @deprecated
+ */
 export type LabeledEntry = { option: string } & ConfigEntry;
 
 /**
