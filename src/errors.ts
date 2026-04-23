@@ -223,3 +223,26 @@ export class MissingOptionPropertyError extends ConfigError {
     Object.freeze(this);
   }
 }
+
+/**
+ * Missing option type error.
+ *
+ * Raised when a configuration entry does not define a "type" property.
+ *
+ * The "type" property is required for all option entries and determines
+ * how the option is parsed and validated. Without it, the entry cannot
+ * be interpreted by the parser.
+ *
+ * This is a configuration error and is typically raised during
+ * configuration validation.
+ */
+export class MissingOptionTypeError extends ConfigError {
+  public option: string;
+
+  constructor(name: string) {
+    const msg = `option '${name}' is missing required property 'type'`;
+    super(msg);
+    this.option = name;
+    Object.freeze(this);
+  }
+}
