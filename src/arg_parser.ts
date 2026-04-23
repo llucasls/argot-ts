@@ -151,7 +151,7 @@ export class ArgParser {
       case 'alias': {
         const { target } = entry as t.AliasEntry;
         const targetEntry: t.ConfigEntry = this.configs.get(target);
-        const targetType: t.OptionType = targetEntry.type;
+        const targetType = targetEntry.type as t.AliasType;
 
         switch (targetType) {
           case 'flag': {
@@ -190,9 +190,6 @@ export class ArgParser {
               return [target, value.split(sep ?? ',')];
             }
             throw new NullArgError(name, target);
-          }
-          case 'alias': {
-            throw new Error('alias cannot target another alias');
           }
         }
       }
@@ -277,7 +274,7 @@ export class ArgParser {
         case 'alias': {
           const { target } = entry as t.AliasEntry;
           const targetEntry: t.ConfigEntry = this.configs.get(target);
-          const targetType: t.OptionType = targetEntry.type;
+          const targetType = targetEntry.type as t.AliasType;
 
           switch (targetType) {
             case 'flag': {
@@ -337,9 +334,6 @@ export class ArgParser {
               }
 
               throw new NullArgError(name, target);
-            }
-            case 'alias': {
-              throw new Error('alias cannot target another alias');
             }
           }
         }

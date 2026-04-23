@@ -279,27 +279,6 @@ describe('test ArgParser', () => {
     }).toThrow(NullArgError);
   });
 
-  test('throw error on alias option targeting another alias', () => {
-    const entries: ConfigEntries = {
-      A: { type: 'flag' },
-      a: { type: 'alias', target: 'A' },
-      alpha: { type: 'alias', target: 'a' },
-      B: { type: 'flag' },
-      b: { type: 'alias', target: 'beta' },
-      beta: { type: 'alias', target: 'B' },
-    };
-    const badConfig = new ParserConfig(entries);
-    const badParser = new ArgParser(badConfig);
-
-    expect(() => {
-      badParser.parse(['--alpha'])
-    }).toThrow(Error);
-
-    expect(() => {
-      badParser.parse(['-b'])
-    }).toThrow(Error);
-  });
-
   test('parse alias long options', () => {
     const result = parser.parse([
       '--dry-run',

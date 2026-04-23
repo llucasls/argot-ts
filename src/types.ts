@@ -6,6 +6,13 @@ export type OptionType =
   | 'list'
   | 'alias';
 
+export type AliasType =
+  | 'flag'
+  | 'text'
+  | 'int'
+  | 'count'
+  | 'list';
+
 export type FlagEntry = { type: 'flag' };
 export type TextEntry = { type: 'text'; default?: string };
 export type IntEntry = { type: 'int'; default?: number };
