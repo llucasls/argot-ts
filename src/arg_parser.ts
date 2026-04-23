@@ -6,10 +6,8 @@ import { parseIntStrict } from './utils.ts';
 
 /**
  * Command-line argument parser.
- *
  * The parser processes an array of strings according to a
  * configuration and produces a structured result.
- *
  * Parsing follows UNIX-style short options and GNU-style long
  * options.
  */
@@ -26,16 +24,12 @@ export class ArgParser {
 
   /**
    * Parse an array of command-line arguments.
-   *
    * Arguments are processed from left to right. Each argument is
    * classified as one of:
-   *
    * - option: matches a configured short or long option
    * - parameter: of the form "key=value"
    * - operand: any other argument
-   *
    * Parsing rules:
-   *
    * - The literal "--" stops option parsing. All subsequent
    *   arguments are treated as operands.
    * - Short options may be combined (e.g. "-abc").
@@ -58,12 +52,10 @@ export class ArgParser {
    *   - other options overwrite previous values
    * - Alias options store their values under the target option's
    *   name.
-   *
    * Returns:
    * - options: parsed option values
    * - parameters: key/value assignments
    * - operands: positional arguments
-   *
    * Throws:
    * - UnknownOptionError if an unrecognized option is encountered
    * - NullArgError or NullIntError if a required value is missing

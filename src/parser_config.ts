@@ -3,7 +3,6 @@ import { validateEntries } from './utils.ts';
 
 /**
  * Immutable configuration for the argument parser.
- *
  * The configuration defines the set of supported options and their types.
  * Entries are provided as an object mapping option names to configuration
  * entries.

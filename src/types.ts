@@ -1,6 +1,5 @@
 /**
  * Option type.
- *
  * Defines the kind of value an option accepts and how it is parsed.
  */
 export type OptionType =
@@ -13,9 +12,7 @@ export type OptionType =
 
 /**
  * Alias target type.
- *
  * Represents the set of option types that an alias may reference.
- *
  * Aliases cannot target other aliases.
  */
 export type AliasType =
@@ -27,32 +24,29 @@ export type AliasType =
 
 /**
  * Flag option entry.
- *
  * A flag is a boolean option that is set to true when present.
  */
 export type FlagEntry = { type: 'flag' };
 
 /**
  * Text option entry.
- *
  * A text option accepts a string value. A default value may be
- * provided if the option is not present.
+ * defined for command-line options provided without an associated
+ * value.
  */
 export type TextEntry = { type: 'text'; default?: string };
 
 /**
  * Integer option entry.
- *
  * An integer option accepts a numeric value. The value must be a
- * valid integer and may be subject to runtime-specific constraints.
- *
- * A default value may be provided if the option is not present.
+ * valid integer and must be a safe integer. A default value may
+ * be defined for command-line options provided without an
+ * associated value.
  */
 export type IntEntry = { type: 'int'; default?: number };
 
 /**
  * Count option entry.
- *
  * A count option increments a numeric counter each time the option
  * is provided.
  */
@@ -60,19 +54,15 @@ export type CountEntry = { type: 'count' };
 
 /**
  * List option entry.
- *
  * A list option accepts a string value and splits it into multiple
  * entries using a separator.
- *
  * The separator defaults to a comma if not specified.
  */
 export type ListEntry = { type: 'list'; sep?: string };
 
 /**
  * Alias option entry.
- *
  * An alias forwards its value to another option.
- *
  * The target must reference a valid, non-alias option.
  */
 export type AliasEntry = { type: 'alias'; target: string };
@@ -93,23 +83,19 @@ export type LabeledEntry = { option: string } & ConfigEntry;
 
 /**
  * Configuration entries.
- *
  * Represents the full set of option definitions.
  */
 export type ConfigEntries = Record<string, ConfigEntry> | LabeledEntry[];
 
 /**
  * Option value.
- *
  * Represents the possible values returned for parsed options.
  */
 export type OptionValue = boolean | string | number | string[];
 
 /**
  * Result mapping.
- *
  * A map-like structure used to store parsed key-value pairs.
- *
  * Instances can be frozen to prevent further modifications.
  */
 abstract class ResultMapping<K, V> extends Map<K, V> {
@@ -129,7 +115,6 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
 
   /**
    * Sets a value for the given key.
-   *
    * Throws if the mapping is frozen.
    */
   override set(key: K, value: V): this {
@@ -140,7 +125,6 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
 
   /**
    * Deletes a key from the mapping.
-   *
    * Throws if the mapping is frozen.
    */
   override delete(key: K): boolean {
@@ -151,7 +135,6 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
 
   /**
    * Clears all entries from the mapping.
-   *
    * Throws if the mapping is frozen.
    */
   override clear(): void {
@@ -178,9 +161,7 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
 
 /**
  * Result list.
- *
  * An array-like structure used to store ordered values.
- *
  * Only numeric indices and the length property may be modified.
  * Assigning any other property will throw an error.
  */
@@ -210,39 +191,27 @@ abstract class ResultList<T> extends Array<T> {
 
 /**
  * Parsed option values.
- *
  * Values are determined by the parser configuration. Repeated options
  * either overwrite previous values or accumulate them, depending on
  * their type.
- *
- * The mapping is immutable after parsing.
  */
 export class Options extends ResultMapping<string, OptionValue> {}
 
 /**
  * Parsed key/value assignments.
- *
  * Parameters are parsed from arguments of the form "key=value" and do
  * not depend on the parser configuration.
- *
- * The mapping is immutable after parsing.
  */
 export class Parameters extends ResultMapping<string, string> {}
 
 /**
  * Positional arguments.
- *
  * Operands are arguments that are not parsed as options or parameters.
- *
- * The list is immutable after parsing.
  */
 export class Operands extends ResultList<string> {}
 
 /**
- * Parse result.
- *
- * Represents the result of parsing input arguments.
- *
+ * The result of parsing operations.
  * - options: parsed option values
  * - parameters: parsed named parameters
  * - operands: positional arguments

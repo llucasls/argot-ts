@@ -9,14 +9,20 @@
  *
  * Example:
  *
- * ```typescript
- * import { ArgParser, ParserConfig } from '@argot-cli/argot';
+ * ```ts
+ * import {
+ *   ArgParser,
+ *   ParserConfig,
+ *   type ConfigEntries,
+ * } from '@argot-cli/argot';
  *
- * const config = new ParserConfig({
+ * const entries: ConfigEntries = {
  *   verbose: { type: 'flag' },
  *   count: { type: 'int' },
  *   name: { type: 'text', default: 'world' },
- * });
+ * };
+ *
+ * const config = new ParserConfig(entries);
  *
  * const parser = new ArgParser(config);
  *
