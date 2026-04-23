@@ -1,4 +1,10 @@
-import { InvalidIntError } from './errors.ts';
+import {
+  AliasTargetNotFoundError,
+  InvalidAliasTargetError,
+  InvalidIntError,
+  InvalidOptionTypeError,
+  MissingOptionPropertyError,
+} from './errors.ts';
 import type {
   ConfigEntry,
   OptionType,
@@ -15,7 +21,7 @@ export function parseIntStrict(value: string | number): number {
   }
 
   if (!/^-?\d+$/.test(value)) {
-    throw new InvalidIntError(`'${value}' is not a valid integer`);
+    throw new InvalidIntError(value);
   }
 
   return Number(value);
@@ -72,8 +78,7 @@ export function validateEntry(entry: LabeledEntry): void {
     case 'alias': {
       if (!Object.hasOwn(entry, 'target')) {
         const { option } = entry;
-        const msg = `'target' not found in alias option ${option}`;
-        throw new Error(msg);
+        throw new MissingOptionPropertyError(option, 'target');
       }
 
       const { target } = entry as AliasEntry;
@@ -83,8 +88,7 @@ export function validateEntry(entry: LabeledEntry): void {
       break;
     }
     default: {
-      const msg = `option type '${tag}' is not supported`;
-      throw new Error(msg);
+      throw new InvalidOptionTypeError(tag);
     }
   }
 }
@@ -106,9 +110,11 @@ export function validateEntries(
 
   for (const [name, target] of aliases) {
     if (!Object.hasOwn(entries, target)) {
-      throw new Error(
-        `target value '${target}' for option '${name}' was not found`
-      );
+      throw new AliasTargetNotFoundError(name, target);
+    }
+    const targetEntry: ConfigEntry = entries[target];
+    if (targetEntry.type === 'alias') {
+      throw new InvalidAliasTargetError(name, target);
     }
   }
 }

@@ -1,7 +1,7 @@
 import type * as t from './types.ts';
 import type { ParserConfig } from './parser_config.ts';
 import { Options, Parameters, Operands } from './types.ts';
-import { NullArgError, NullIntError } from './errors.ts';
+import { NullArgError, NullIntError, UnknownOptionError } from './errors.ts';
 import { parseIntStrict } from './utils.ts';
 
 export class ArgParser {
@@ -27,6 +27,12 @@ export class ArgParser {
 
     if (!Array.isArray(argList)) {
       throw new TypeError(`argList must be an array of strings`);
+    }
+
+    for (let i = 0, n = argList.length; i < n; i++) {
+      if (typeof argList[i] !== 'string') {
+        throw new TypeError(`argList must be an array of strings`);
+      }
     }
 
     let stopParsing = false;
@@ -108,6 +114,9 @@ export class ArgParser {
     }
 
     const entry: t.ConfigEntry = this.configs.get(name);
+    if (entry == null) {
+      throw new UnknownOptionError(name);
+    }
     const tag: t.OptionType = entry.type;
 
     switch (tag) {
@@ -210,6 +219,9 @@ export class ArgParser {
       name = arg[i] as string;
       value = nextArg ?? null;
       entry = this.configs.get(name);
+      if (entry == null) {
+        throw new UnknownOptionError(name);
+      }
       const tag: t.OptionType = entry.type;
 
       switch (tag) {
