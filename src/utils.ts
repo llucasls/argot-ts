@@ -4,6 +4,7 @@ import {
   InvalidIntError,
   InvalidOptionTypeError,
   MissingOptionPropertyError,
+  UnsafeIntegerError,
 } from './errors.ts';
 import type {
   ConfigEntry,
@@ -15,16 +16,17 @@ import type {
   ListEntry,
 } from './types.ts';
 
-export function parseIntStrict(value: string | number): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
-  if (!/^-?\d+$/.test(value)) {
+export function parseIntStrict(value: string): number {
+  if (!/^(-|\+)?\d+$/.test(value)) {
     throw new InvalidIntError(value);
   }
 
-  return Number(value);
+  const num = Number(value);
+  if (!Number.isSafeInteger(num)) {
+    throw new UnsafeIntegerError(num);
+  }
+
+  return num;
 }
 
 export function validateEntry(entry: LabeledEntry): void {

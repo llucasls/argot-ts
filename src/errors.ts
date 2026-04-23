@@ -1,8 +1,3 @@
-const immutable: PropertyDescriptor = {
-  writable: false,
-  configurable: false,
-};
-
 /**
  * Runtime error.
  *
@@ -46,7 +41,26 @@ export class InvalidIntError extends RuntimeError {
   constructor(value: string) {
     super(`'${value}' is not a valid integer`);
     this.value = value;
-    Object.defineProperty(this, 'value', immutable);
+    Object.freeze(this);
+  }
+}
+
+/**
+ * Unsafe integer error.
+ *
+ * Raised when a parsed integer cannot be safely represented
+ * by the underlying runtime.
+ *
+ * This error only applies to values that are successfully parsed
+ * as integers.
+ */
+export class UnsafeIntegerError extends RuntimeError {
+  public value: number;
+
+  constructor(value: number) {
+    super(`${value} is not a safe integer`);
+    this.value = value;
+    Object.freeze(this);
   }
 }
 
@@ -69,11 +83,10 @@ export class NullArgError extends RuntimeError {
       : `option '${name}' must take an argument`;
     super(msg);
     this.option = name;
-    Object.defineProperty(this, 'option', immutable);
     if (target) {
       this.target = target;
-      Object.defineProperty(this, 'target', immutable);
     }
+    Object.freeze(this);
   }
 }
 
@@ -99,11 +112,10 @@ export class NullIntError extends RuntimeError {
       : `option '${name}' requires an integer number argument`;
     super(msg);
     this.option = name;
-    Object.defineProperty(this, 'option', immutable);
     if (target) {
       this.target = target;
-      Object.defineProperty(this, 'target', immutable);
     }
+    Object.freeze(this);
   }
 }
 
@@ -122,7 +134,7 @@ export class UnknownOptionError extends RuntimeError {
   constructor(name: string) {
     super(`option '${name}' is not supported`);
     this.option = name;
-    Object.defineProperty(this, 'option', immutable);
+    Object.freeze(this);
   }
 }
 
@@ -141,7 +153,7 @@ export class InvalidOptionTypeError extends ConfigError {
   constructor(tag: string) {
     super(`option type '${tag}' is not supported`);
     this.type = tag;
-    Object.defineProperty(this, 'type', immutable);
+    Object.freeze(this);
   }
 }
 
@@ -162,8 +174,7 @@ export class AliasTargetNotFoundError extends ConfigError {
     super(`target value '${target}' for option '${name}' was not found`);
     this.option = name;
     this.target = target;
-    Object.defineProperty(this, 'target', immutable);
-    Object.defineProperty(this, 'option', immutable);
+    Object.freeze(this);
   }
 }
 
@@ -185,8 +196,7 @@ export class InvalidAliasTargetError extends ConfigError {
     super(`cannot create an alias to another alias (${name} => ${target})`);
     this.option = name;
     this.target = target;
-    Object.defineProperty(this, 'target', immutable);
-    Object.defineProperty(this, 'option', immutable);
+    Object.freeze(this);
   }
 }
 
@@ -210,7 +220,6 @@ export class MissingOptionPropertyError extends ConfigError {
     super(`option '${option}' is missing required property '${property}'`);
     this.option = option;
     this.property = property;
-    Object.defineProperty(this, 'option', immutable);
-    Object.defineProperty(this, 'property', immutable);
+    Object.freeze(this);
   }
 }

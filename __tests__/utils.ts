@@ -37,12 +37,6 @@ describe('test parseIntStrict', () => {
       parseIntStrict('six');
     }).toThrow(InvalidIntError);
   });
-
-  test('return same value on numeric input', () => {
-    const input = 12;
-    const output = parseIntStrict(input);
-    expect(output).toEqual(input);
-  });
 });
 
 describe('test validateEntry', () => {

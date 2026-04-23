@@ -6,7 +6,12 @@ import { ArgParser } from '../src/arg_parser.ts';
 import { ParserConfig } from '../src/parser_config.ts';
 import type { ConfigEntries } from '../src/types.ts';
 import { Options, Parameters, Operands } from '../src/types.ts';
-import { NullArgError, NullIntError, UnknownOptionError } from '../src/errors.ts';
+import {
+  NullArgError,
+  NullIntError,
+  UnknownOptionError,
+  UnsafeIntegerError,
+} from '../src/errors.ts';
 
 describe('test ArgParser', () => {
   const entries: ConfigEntries = {
@@ -317,5 +322,11 @@ describe('test ArgParser', () => {
     expect(() => {
       parser.parse(['-Z']);
     }).toThrow(UnknownOptionError);
+  });
+
+  test('throw error on int option unsafe value', () => {
+    expect(() => {
+      parser.parse(['-i', '9007199254740992']);
+    }).toThrow(UnsafeIntegerError);
   });
 });
