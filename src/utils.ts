@@ -4,6 +4,7 @@ import {
   InvalidIntError,
   InvalidOptionTypeError,
   MissingOptionPropertyError,
+  MissingOptionTypeError,
   UnsafeIntegerError,
 } from './errors.ts';
 import type {
@@ -16,6 +17,16 @@ import type {
   ListEntry,
 } from './types.ts';
 
+/**
+ * Parses a string as an integer.
+ *
+ * The value must consist only of an optional sign followed by digits.
+ * The resulting number must be safely representable by the runtime.
+ *
+ * Throws:
+ * - InvalidIntError if the value is not a valid integer string
+ * - UnsafeIntegerError if the parsed value cannot be safely represented
+ */
 export function parseIntStrict(value: string): number {
   if (!/^(-|\+)?\d+$/.test(value)) {
     throw new InvalidIntError(value);
@@ -29,6 +40,18 @@ export function parseIntStrict(value: string): number {
   return num;
 }
 
+/**
+ * Validates a single configuration entry.
+ *
+ * The entry must be a labeled object containing at least the "option"
+ * and "type" properties. Additional properties are validated according
+ * to the entry type.
+ *
+ * Throws:
+ * - TypeError if the entry is not an object or contains invalid values
+ * - MissingOptionPropertyError if a required property is missing
+ * - InvalidOptionTypeError if the option type is not supported
+ */
 export function validateEntry(entry: LabeledEntry): void {
   if (entry == null || typeof entry !== 'object') {
     throw new TypeError('option config entry must be an object');
@@ -95,6 +118,19 @@ export function validateEntry(entry: LabeledEntry): void {
   }
 }
 
+/**
+ * Validates a set of configuration entries.
+ *
+ * Each entry is validated individually. Alias entries are validated
+ * after all entries have been processed to ensure that:
+ * - the target exists
+ * - the target is not itself an alias
+ *
+ * Throws:
+ * - Any error raised by validateEntry
+ * - AliasTargetNotFoundError if an alias target does not exist
+ * - InvalidAliasTargetError if an alias targets another alias
+ */
 export function validateEntries(
   entries: Record<string, ConfigEntry>
 ): void {

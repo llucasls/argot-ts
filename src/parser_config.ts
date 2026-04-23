@@ -1,6 +1,15 @@
 import type { ConfigEntry, ConfigEntries } from './types.ts';
 import { validateEntries } from './utils.ts';
 
+/**
+ * Immutable configuration for the argument parser.
+ *
+ * The configuration defines the set of supported options and their types.
+ * Entries are provided as an object mapping option names to configuration
+ * entries.
+ * The configuration is normalized and validated during construction.
+ * The resulting object is immutable.
+ */
 export class ParserConfig {
   #entries: Record<string, ConfigEntry>;
   #size: number;
