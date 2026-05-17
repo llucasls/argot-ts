@@ -15,14 +15,6 @@ describe('test readJSONConfig', () => {
     expect(parserConfig).toBeInstanceOf(ParserConfig)
   });
 
-  test('return ParserConfig object from JSON array', () => {
-    const file = `${testDir}/config_array.json`;
-
-    const parserConfig = readJSONConfig(file);
-
-    expect(parserConfig).toBeInstanceOf(ParserConfig)
-  });
-
   test('return ParserConfig object from TOML map', () => {
     const file = `${testDir}/config_map.toml`;
 

@@ -77,15 +77,10 @@ export type ConfigEntry = (
 );
 
 /**
- * @deprecated
- */
-export type LabeledEntry = { option: string } & ConfigEntry;
-
-/**
  * Configuration entries.
  * Represents the full set of option definitions.
  */
-export type ConfigEntries = Record<string, ConfigEntry> | LabeledEntry[];
+export type ConfigEntries = Record<string, ConfigEntry>;
 
 /**
  * Option value.

@@ -24,20 +24,16 @@ describe('test ParserConfig', () => {
     expect(parserConfig.get('output')).toMatchObject({ type: 'text' });
   });
 
-  test('create ParserConfig from array', () => {
-    const parserConfig = new ParserConfig([
-      { option: 'quiet', type: 'flag' },
-      { option: 'output', type: 'text' },
-    ]);
-
-    expect(parserConfig).toBeInstanceOf(ParserConfig);
-    expect(parserConfig.get('quiet')).toMatchObject({ type: 'flag' });
-    expect(parserConfig.get('output')).toMatchObject({ type: 'text' });
-  });
-
   test('throw error on invalid input', () => {
     expect(() => {
       new ParserConfig(null!);
+    }).toThrow(TypeError);
+
+    expect(() => {
+      new ParserConfig([
+        { option: 'output', type: 'text' },
+        { option: 'users', type: 'list' },
+      ] as unknown as ConfigEntries);
     }).toThrow(TypeError);
   });
 
@@ -97,22 +93,14 @@ describe('test ParserConfig', () => {
   });
 
   test('return correct number of entries', () => {
-    const configObj: ConfigEntries = {
+    const configs: ConfigEntries = {
       output: { type: 'text' },
       users: { type: 'list' },
       logLevel: { type: 'count' },
       workers: { type: 'int' },
     };
-    const configArray: ConfigEntries = [
-      { option: 'output', type: 'text' },
-      { option: 'users', type: 'list' },
-      { option: 'logLevel', type: 'count' },
-      { option: 'workers', type: 'int' },
-    ];
-    const parser1 = new ParserConfig(configObj);
-    const parser2 = new ParserConfig(configArray);
+    const parser = new ParserConfig(configs);
 
-    expect(parser1.size).toEqual(Object.keys(configObj).length);
-    expect(parser2.size).toEqual(configArray.length);
+    expect(parser.size).toEqual(Object.keys(configs).length);
   });
 });

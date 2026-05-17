@@ -15,15 +15,10 @@ export class ParserConfig {
 
   constructor(entries: ConfigEntries) {
     this.#size = 0;
+    const msg = 'input value must be an object mapping option names to entries';
 
     if (Array.isArray(entries)) {
-      const entryMap = Object.create(null);
-      for (const labeledEntry of entries) {
-        const { option: name, ...newEntry } = labeledEntry;
-        entryMap[name] = Object.freeze(newEntry);
-        this.#size += 1;
-      }
-      this.#entries = entryMap;
+      throw new TypeError(msg);
     } else if (entries && typeof entries === 'object') {
       const entryMap = Object.create(null);
       for (const [key, value] of Object.entries(entries)) {
@@ -32,7 +27,7 @@ export class ParserConfig {
       }
       this.#entries = entryMap;
     } else {
-      throw new TypeError('input value must be an array or object');
+      throw new TypeError(msg);
     }
 
     validateEntries(this.#entries);
