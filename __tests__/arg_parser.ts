@@ -14,7 +14,7 @@ import {
 } from '../src/errors.ts';
 
 describe('test ArgParser', () => {
-  const entries: ConfigEntries = {
+  const options: ConfigEntries = {
     strict: { type: 'flag' },
     output: { type: 'text' },
     'output-file': { type: 'alias', target: 'output' },
@@ -56,7 +56,7 @@ describe('test ArgParser', () => {
     T: { type: 'alias', target: 'tasks' },
     E: { type: 'list' },
   };
-  const parserConfig = new ParserConfig(entries);
+  const parserConfig = new ParserConfig({ options });
 
   const parser = new ArgParser(parserConfig);
 

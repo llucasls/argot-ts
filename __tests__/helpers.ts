@@ -1,8 +1,6 @@
 import { assertEquals, assertObjectMatch } from '@std/assert';
 
-type Key = string | number | symbol;
-
-export function assertMappingMatches<K extends Key, V>(
+export function assertMappingMatches<K extends PropertyKey, V>(
   actual: Map<K, V>,
   expected: Record<K, V>,
   msg?: string
@@ -16,7 +14,7 @@ export function assertMappingMatches<K extends Key, V>(
   assertObjectMatch(actualObj, expected, msg);
 }
 
-export function assertMappingEquals<K extends Key, V>(
+export function assertMappingEquals<K extends PropertyKey, V>(
   actual: Map<K, V>,
   expected: Record<K, V>,
   msg?: string

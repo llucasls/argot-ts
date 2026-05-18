@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import * as toml from '@std/toml';
 import { ParserConfig } from './parser_config.ts';
-import type { ConfigEntries } from './types.ts';
+import type { ParserConfigInput } from './types.ts';
 
 function readTextFileSync(path: string): string {
   return fs.readFileSync(path, { encoding: 'utf8' });
@@ -12,9 +12,7 @@ function readTextFileSync(path: string): string {
  * The file must contain a valid configuration object that can be
  * passed to the ParserConfig constructor.
  */
-export function readJSONConfig(
-  configFile: string
-): ParserConfig {
+export function readJSONConfig(configFile: string): ParserConfig {
   return new ParserConfig(JSON.parse(readTextFileSync(configFile)));
 }
 
@@ -23,12 +21,7 @@ export function readJSONConfig(
  * The file must contain an "entries" table with configuration
  * entries that can be passed to the ParserConfig constructor.
  */
-export function readTOMLConfig(
-  configFile: string
-): ParserConfig {
-  const result = toml.parse(readTextFileSync(configFile)) as {
-    entries: ConfigEntries,
-  };
-
-  return new ParserConfig(result.entries);
+export function readTOMLConfig(configFile: string): ParserConfig {
+  const result = toml.parse(readTextFileSync(configFile)) as ParserConfigInput;
+  return new ParserConfig(result);
 }

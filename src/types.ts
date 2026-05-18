@@ -77,10 +77,35 @@ export type ConfigEntry = (
 );
 
 /**
- * Configuration entries.
- * Represents the full set of option definitions.
+ * An object holding option configuration entries.
  */
 export type ConfigEntries = Record<string, ConfigEntry>;
+
+/**
+ * ParserConfig configuration flags that don't refer to a single
+ * command-line option.
+ */
+export type ParserOptions = {
+  allowUnknown?: boolean;
+  parseParameters?: boolean;
+  aggregateErrors?: boolean;
+};
+
+export type StrictParserOptions = {
+  allowUnknown: boolean;
+  parseParameters: boolean;
+  aggregateErrors: boolean;
+};
+
+/**
+ * The input object for the ParserConfig constructor.
+ * Contains configuration for specific command-line options
+ * and general configuration options.
+ */
+export type ParserConfigInput = {
+  options: ConfigEntries;
+  parser?: ParserOptions;
+}
 
 /**
  * Option value.

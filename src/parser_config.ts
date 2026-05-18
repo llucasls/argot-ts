@@ -1,5 +1,16 @@
-import type { ConfigEntry, ConfigEntries } from './types.ts';
+import type {
+  ConfigEntry,
+  ConfigEntries,
+  ParserConfigInput,
+  StrictParserOptions,
+} from './types.ts';
 import { validateEntries } from './utils.ts';
+
+function isObject(obj: unknown): obj is Record<string, unknown> {
+  if (Array.isArray(obj) || obj == null || typeof obj !== 'object')
+    return false;
+  return true;
+}
 
 /**
  * Immutable configuration for the argument parser.
@@ -10,28 +21,38 @@ import { validateEntries } from './utils.ts';
  * The resulting object is immutable.
  */
 export class ParserConfig {
-  #entries: Record<string, ConfigEntry>;
+  #entries: ConfigEntries;
+  #parser: StrictParserOptions;
   #size: number;
 
-  constructor(entries: ConfigEntries) {
-    this.#size = 0;
-    const msg = 'input value must be an object mapping option names to entries';
-
-    if (Array.isArray(entries)) {
-      throw new TypeError(msg);
-    } else if (entries && typeof entries === 'object') {
-      const entryMap = Object.create(null);
-      for (const [key, value] of Object.entries(entries)) {
-        entryMap[key] = Object.freeze({ ...value });
-        this.#size += 1;
-      }
-      this.#entries = entryMap;
-    } else {
-      throw new TypeError(msg);
+  constructor(input: ParserConfigInput) {
+    if (!isObject(input)) {
+      throw new TypeError('input value must be a plain object');
+    } else if (!isObject(input.options)) {
+      throw new TypeError('"options" value must be a plain object');
+    } else if (input.parser != null && !isObject(input.parser)) {
+      throw new TypeError('"parser" value must be a plain object');
     }
+
+    const { options, parser } = input;
+
+    this.#parser = {
+      allowUnknown: parser?.allowUnknown ?? false,
+      parseParameters: parser?.parseParameters ?? true,
+      aggregateErrors: parser?.aggregateErrors ?? false,
+    };
+
+    this.#size = 0;
+    const entryMap = Object.create(null);
+    for (const [key, value] of Object.entries(options)) {
+      entryMap[key] = Object.freeze({ ...value });
+      this.#size += 1;
+    }
+    this.#entries = entryMap;
 
     validateEntries(this.#entries);
     Object.freeze(this.#entries);
+    Object.freeze(this.#parser);
     Object.freeze(this);
   }
 
@@ -55,11 +76,26 @@ export class ParserConfig {
     return Object.values(this.#entries);
   }
 
-  public toJSON(): Record<string, ConfigEntry> {
-    return this.#entries;
+  public toJSON(): ParserConfigInput {
+    return {
+      options: this.#entries,
+      parser: this.#parser,
+    };
   }
 
   get size(): number {
     return this.#size;
+  }
+
+  get allowUnknown(): boolean {
+    return this.#parser.allowUnknown;
+  }
+
+  get parseParameters(): boolean {
+    return this.#parser.parseParameters;
+  }
+
+  get aggregateErrors(): boolean {
+    return this.#parser.aggregateErrors;
   }
 }

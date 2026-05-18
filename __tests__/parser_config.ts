@@ -2,26 +2,40 @@ import { expect } from '@std/expect';
 import { describe, test } from '@std/testing/bdd';
 
 import { ParserConfig } from '../src/parser_config.ts';
-import type { ConfigEntries } from '../src/types.ts';
+import type { ConfigEntries, ParserOptions } from '../src/types.ts';
 import { InvalidAliasTargetError } from '../src/errors.ts';
 
 describe('test ParserConfig', () => {
-  const parserConfig = new ParserConfig({
+  const options: ConfigEntries = {
     output: { type: 'text' },
     users: { type: 'list' },
     logLevel: { type: 'count' },
     workers: { type: 'int' },
-  });
+  };
+  const parser: ParserOptions = {
+    allowUnknown: false,
+    parseParameters: true,
+    aggregateErrors: false,
+  }
+  const parserConfig = new ParserConfig({ options, parser });
 
   test('create ParserConfig from object', () => {
     const parserConfig = new ParserConfig({
-      quiet: { type: 'flag' },
-      output: { type: 'text' },
+      options: {
+        quiet: { type: 'flag' },
+        output: { type: 'text' },
+      }
     });
 
     expect(parserConfig).toBeInstanceOf(ParserConfig);
     expect(parserConfig.get('quiet')).toMatchObject({ type: 'flag' });
     expect(parserConfig.get('output')).toMatchObject({ type: 'text' });
+  });
+
+  test('read parser options from ParserConfig object', () => {
+    expect(parserConfig.allowUnknown).toBe(false);
+    expect(parserConfig.parseParameters).toBe(true);
+    expect(parserConfig.aggregateErrors).toBe(false);
   });
 
   test('throw error on invalid input', () => {
@@ -30,19 +44,36 @@ describe('test ParserConfig', () => {
     }).toThrow(TypeError);
 
     expect(() => {
-      new ParserConfig([
-        { option: 'output', type: 'text' },
-        { option: 'users', type: 'list' },
-      ] as unknown as ConfigEntries);
+      new ParserConfig({
+        options: [
+          { option: 'output', type: 'text' },
+          { option: 'users', type: 'list' },
+        ] as unknown as ConfigEntries
+      });
+    }).toThrow(TypeError);
+
+    expect(() => {
+      new ParserConfig({
+        options: {
+          a: { type: 'flag' },
+          o: { type: 'text' },
+        },
+        parser: [
+          { allowUnknown: true },
+          { parseParameters: true },
+        ] as unknown as ParserOptions
+      });
     }).toThrow(TypeError);
   });
 
   test('throw error on alias chains', () => {
     expect(() => {
       new ParserConfig({
-        version: { type: 'int' },
-        v: { type: 'alias', target: 'version' },
-        V: { type: 'alias', target: 'v' },
+        options: {
+          version: { type: 'int' },
+          v: { type: 'alias', target: 'version' },
+          V: { type: 'alias', target: 'v' },
+        }
       });
     }).toThrow(InvalidAliasTargetError);
   });
@@ -85,22 +116,29 @@ describe('test ParserConfig', () => {
     const serialized = JSON.stringify(parserConfig);
     const parsed = JSON.parse(serialized);
     expect(parsed).toMatchObject({
-      output: { type: 'text' },
-      users: { type: 'list' },
-      logLevel: { type: 'count' },
-      workers: { type: 'int' },
+      options: {
+        output: { type: 'text' },
+        users: { type: 'list' },
+        logLevel: { type: 'count' },
+        workers: { type: 'int' },
+      },
+      parser: {
+        allowUnknown: false,
+        parseParameters: true,
+        aggregateErrors: false,
+      },
     });
   });
 
   test('return correct number of entries', () => {
-    const configs: ConfigEntries = {
+    const options: ConfigEntries = {
       output: { type: 'text' },
       users: { type: 'list' },
       logLevel: { type: 'count' },
       workers: { type: 'int' },
     };
-    const parser = new ParserConfig(configs);
+    const parser = new ParserConfig({ options });
 
-    expect(parser.size).toEqual(Object.keys(configs).length);
+    expect(parser.size).toEqual(Object.keys(options).length);
   });
 });
