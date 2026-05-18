@@ -1,4 +1,14 @@
-import type * as t from './types.ts';
+import type {
+  AliasEntry,
+  AliasType,
+  ConfigEntry,
+  IntEntry,
+  ListEntry,
+  OptionType,
+  OptionValue,
+  ParseResult,
+  TextEntry,
+} from './types.ts';
 import type { ParserConfig } from './parser_config.ts';
 import { Options, Parameters, Operands } from './types.ts';
 import { NullArgError, NullIntError, UnknownOptionError } from './errors.ts';
@@ -61,7 +71,7 @@ export class ArgParser {
    * - NullArgError or NullIntError if a required value is missing
    * - InvalidIntError or UnsafeIntegerError for invalid numeric values
    */
-  public parse(argList: string[]): Readonly<t.ParseResult> {
+  public parse(argList: string[]): Readonly<ParseResult> {
     // options: parsed option values
     const options = new Options();
 
@@ -145,7 +155,7 @@ export class ArgParser {
     return Object.freeze(result);
   }
 
-  private parseLongOption(arg: string): [string, t.OptionValue] {
+  private parseLongOption(arg: string): [string, OptionValue] {
     const offset = 2;
 
     let name: string;
@@ -159,11 +169,11 @@ export class ArgParser {
       value = null;
     }
 
-    const entry: t.ConfigEntry = this.configs.get(name);
+    const entry: ConfigEntry = this.configs.get(name);
     if (entry == null) {
       throw new UnknownOptionError(name);
     }
-    const tag: t.OptionType = entry.type;
+    const tag: OptionType = entry.type;
 
     switch (tag) {
       case 'flag': {
@@ -173,7 +183,7 @@ export class ArgParser {
         if (value != null) {
           return [name, value];
         } else if (Object.hasOwn(entry, 'default')) {
-          const { default: value } = entry as t.TextEntry;
+          const { default: value } = entry as TextEntry;
           return [name, value!];
         }
 
@@ -183,7 +193,7 @@ export class ArgParser {
         if (value != null && value !== '') {
           return [name, parseIntStrict(value)];
         } else if (Object.hasOwn(entry, 'default')) {
-          const { default: value } = entry as t.IntEntry;
+          const { default: value } = entry as IntEntry;
           return [name, value!];
         }
 
@@ -198,15 +208,15 @@ export class ArgParser {
         if (value === '') {
           return [name, []];
         } else if (value != null) {
-          const { sep } = entry as t.ListEntry;
+          const { sep } = entry as ListEntry;
           return [name, value.split(sep ?? ',')];
         }
         throw new NullArgError(name);
       }
       case 'alias': {
-        const { target } = entry as t.AliasEntry;
-        const targetEntry: t.ConfigEntry = this.configs.get(target);
-        const targetType = targetEntry.type as t.AliasType;
+        const { target } = entry as AliasEntry;
+        const targetEntry: ConfigEntry = this.configs.get(target);
+        const targetType = targetEntry.type as AliasType;
 
         switch (targetType) {
           case 'flag': {
@@ -216,7 +226,7 @@ export class ArgParser {
             if (value != null) {
               return [target, value];
             } else if (Object.hasOwn(targetEntry, 'default')) {
-              const { default: value } = targetEntry as t.TextEntry;
+              const { default: value } = targetEntry as TextEntry;
               return [target, value!];
             }
 
@@ -226,7 +236,7 @@ export class ArgParser {
             if (value != null && value !== '') {
               return [target, parseIntStrict(value)];
             } else if (Object.hasOwn(targetEntry, 'default')) {
-              const { default: value } = targetEntry as t.IntEntry;
+              const { default: value } = targetEntry as IntEntry;
               return [target, value!];
             }
 
@@ -241,7 +251,7 @@ export class ArgParser {
             if (value === '') {
               return [target, []];
             } else if (value != null) {
-              const { sep } = targetEntry as t.ListEntry;
+              const { sep } = targetEntry as ListEntry;
               return [target, value.split(sep ?? ',')];
             }
             throw new NullArgError(name, target);
@@ -254,12 +264,12 @@ export class ArgParser {
   private parseShortOption(
     arg: string,
     nextArg: string | null,
-  ): [boolean, Record<string, t.OptionValue>] {
+  ): [boolean, Record<string, OptionValue>] {
     let name: string;
     let value: string | null;
-    let entry: t.ConfigEntry;
+    let entry: ConfigEntry;
 
-    const pairs: Record<string, t.OptionValue> = Object.create(null);
+    const pairs: Record<string, OptionValue> = Object.create(null);
 
     for (let i = 1, n = arg.length; i < n; i++) {
       name = arg[i] as string;
@@ -268,7 +278,7 @@ export class ArgParser {
       if (entry == null) {
         throw new UnknownOptionError(name);
       }
-      const tag: t.OptionType = entry.type;
+      const tag: OptionType = entry.type;
 
       switch (tag) {
         case 'flag': {
@@ -281,7 +291,7 @@ export class ArgParser {
             pairs[name] = value;
             return [false, pairs];
           } else if (Object.hasOwn(entry, 'default')) {
-            const { default: value } = entry as t.TextEntry;
+            const { default: value } = entry as TextEntry;
             pairs[name] = value!;
             return [false, pairs];
           } else if (value != null) {
@@ -297,7 +307,7 @@ export class ArgParser {
             pairs[name] = parseIntStrict(value);
             return [false, pairs];
           } else if (Object.hasOwn(entry, 'default')) {
-            const { default: value } = entry as t.IntEntry;
+            const { default: value } = entry as IntEntry;
             pairs[name] = value!;
             return [false, pairs];
           } else if (value != null) {
@@ -315,14 +325,14 @@ export class ArgParser {
         case 'list': {
           if (i < n - 1) {
             value = arg.slice(i + 1, n);
-            const { sep } = entry as t.ListEntry;
+            const { sep } = entry as ListEntry;
             pairs[name] = value.split(sep ?? ',');
             return [false, pairs];
           } else if (value === '') {
             pairs[name] = [];
             return [true, pairs];
           } else if (value != null) {
-            const { sep } = entry as t.ListEntry;
+            const { sep } = entry as ListEntry;
             pairs[name] = value.split(sep ?? ',');
             return [true, pairs];
           }
@@ -330,9 +340,9 @@ export class ArgParser {
           throw new NullArgError(name);
         }
         case 'alias': {
-          const { target } = entry as t.AliasEntry;
-          const targetEntry: t.ConfigEntry = this.configs.get(target);
-          const targetType = targetEntry.type as t.AliasType;
+          const { target } = entry as AliasEntry;
+          const targetEntry: ConfigEntry = this.configs.get(target);
+          const targetType = targetEntry.type as AliasType;
 
           switch (targetType) {
             case 'flag': {
@@ -345,7 +355,7 @@ export class ArgParser {
                 pairs[target] = value;
                 return [false, pairs];
               } else if (Object.hasOwn(targetEntry, 'default')) {
-                const { default: value } = targetEntry as t.TextEntry;
+                const { default: value } = targetEntry as TextEntry;
                 pairs[target] = value!;
                 return [false, pairs];
               } else if (value != null) {
@@ -361,7 +371,7 @@ export class ArgParser {
                 pairs[target] = parseIntStrict(value);
                 return [false, pairs];
               } else if (Object.hasOwn(targetEntry, 'default')) {
-                const { default: value } = targetEntry as t.IntEntry;
+                const { default: value } = targetEntry as IntEntry;
                 pairs[target] = value!;
                 return [false, pairs];
               } else if (value != null) {
@@ -379,14 +389,14 @@ export class ArgParser {
             case 'list': {
               if (i < n - 1) {
                 value = arg.slice(i + 1, n);
-                const { sep } = targetEntry as t.ListEntry;
+                const { sep } = targetEntry as ListEntry;
                 pairs[target] = value.split(sep ?? ',');
                 return [false, pairs];
               } else if (value === '') {
                 pairs[target] = [];
                 return [true, pairs];
               } else if (value != null) {
-                const { sep } = targetEntry as t.ListEntry;
+                const { sep } = targetEntry as ListEntry;
                 pairs[target] = value.split(sep ?? ',');
                 return [true, pairs];
               }
