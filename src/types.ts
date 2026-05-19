@@ -238,6 +238,6 @@ export class Operands extends ResultList<string> {}
  */
 export interface ParseResult {
   options: Options;
-  parameters: Parameters;
+  parameters?: Parameters;
   operands: Operands;
 }

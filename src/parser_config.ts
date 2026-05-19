@@ -4,7 +4,7 @@ import type {
   ParserConfigInput,
   StrictParserOptions,
 } from './types.ts';
-import { validateEntries } from './utils.ts';
+import { validateEntries, validateEntriesAggregate } from './utils.ts';
 
 function isObject(obj: unknown): obj is Record<string, unknown> {
   if (Array.isArray(obj) || obj == null || typeof obj !== 'object')
@@ -50,7 +50,10 @@ export class ParserConfig {
     }
     this.#entries = entryMap;
 
-    validateEntries(this.#entries);
+    if (this.#parser.aggregateErrors)
+      validateEntriesAggregate(this.#entries);
+    else
+      validateEntries(this.#entries);
     Object.freeze(this.#entries);
     Object.freeze(this.#parser);
     Object.freeze(this);

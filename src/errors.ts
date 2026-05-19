@@ -18,7 +18,17 @@ export class RuntimeError extends Error {}
  * Configuration errors are independent of user input and are
  * typically raised before any parsing takes place.
  */
-export class ConfigError extends Error {}
+export class ConfigError extends Error {
+  private _errors: Error[] = [];
+
+  public push(error: Error): void {
+    this._errors.push(error);
+  }
+
+  get errors(): Error[] {
+    return this._errors;
+  }
+}
 
 /**
  * Invalid integer argument error.

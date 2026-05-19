@@ -1,5 +1,6 @@
 import {
   AliasTargetNotFoundError,
+  ConfigError,
   InvalidAliasTargetError,
   InvalidIntError,
   InvalidOptionTypeError,
@@ -14,6 +15,7 @@ import type {
   TextEntry,
   IntEntry,
   ListEntry,
+  ConfigEntries,
 } from './types.ts';
 
 /**
@@ -120,9 +122,7 @@ export function validateEntry(name: string, entry: ConfigEntry): void {
  * - AliasTargetNotFoundError if an alias target does not exist
  * - InvalidAliasTargetError if an alias targets another alias
  */
-export function validateEntries(
-  entries: Record<string, ConfigEntry>
-): void {
+export function validateEntries(entries: ConfigEntries): void {
   const aliases: [string, string][] = [];
 
   for (const [name, entry] of Object.entries(entries)) {
@@ -143,4 +143,39 @@ export function validateEntries(
       throw new InvalidAliasTargetError(name, target);
     }
   }
+}
+
+export function validateEntriesAggregate(entries: ConfigEntries): void {
+  const aliases: [string, string][] = [];
+  const error = new ConfigError('parser configuration is not valid');
+
+  for (const [name, entry] of Object.entries(entries)) {
+    try {
+      validateEntry(name, entry);
+    } catch (err) {
+      error.push(err as Error);
+      continue;
+    }
+    const tag: OptionType = entry.type;
+    if (tag === 'alias') {
+      const { target } = entry as AliasEntry;
+      aliases.push([name, target]);
+    }
+  }
+
+  for (const [name, target] of aliases) {
+    if (!Object.hasOwn(entries, target)) {
+      error.push(new AliasTargetNotFoundError(name, target));
+      continue;
+    }
+    const targetEntry: ConfigEntry = entries[target];
+    if (targetEntry.type === 'alias') {
+      error.push(new InvalidAliasTargetError(name, target));
+    }
+  }
+
+  if (error.errors.length === 1)
+    throw error.errors[0];
+  else if (error.errors.length > 1)
+    throw error;
 }

@@ -11,7 +11,12 @@ import type {
 } from './types.ts';
 import type { ParserConfig } from './parser_config.ts';
 import { Options, Parameters, Operands } from './types.ts';
-import { NullArgError, NullIntError, UnknownOptionError } from './errors.ts';
+import {
+   NullArgError,
+   NullIntError,
+   UnknownOptionError,
+   RuntimeError,
+} from './errors.ts';
 import { parseIntStrict } from './utils.ts';
 
 /**
@@ -105,25 +110,9 @@ export class ArgParser {
         continue;
       }
 
-      if (this.longOptExp.test(arg)) {
-        const [name, value] = this.parseLongOption(arg);
-        if (this.configs.get(name).type === 'count') {
-          const oldValue = options.get(name) as number ?? 0;
-          const newValue = value as number;
-          options.set(name, oldValue + newValue);
-        } else if (this.configs.get(name).type === 'list') {
-          const oldValue = options.get(name) as string[] ?? [];
-          const newValue = value as string[];
-          options.set(name, oldValue.concat(newValue));
-        } else {
-          options.set(name, value);
-        }
-      } else if (this.shortOptExp.test(arg)) {
-        const [
-          shouldSkip,
-          pairs,
-        ] = this.parseShortOption(arg, argList[i+1] ?? null);
-        for (const [name, value] of Object.entries(pairs)) {
+      try {
+        if (this.longOptExp.test(arg)) {
+          const [name, value] = this.parseLongOption(arg);
           if (this.configs.get(name).type === 'count') {
             const oldValue = options.get(name) as number ?? 0;
             const newValue = value as number;
@@ -135,14 +124,35 @@ export class ArgParser {
           } else {
             options.set(name, value);
           }
+        } else if (this.shortOptExp.test(arg)) {
+          const [
+            shouldSkip,
+            pairs,
+          ] = this.parseShortOption(arg, argList[i+1] ?? null);
+          for (const [name, value] of Object.entries(pairs)) {
+            if (this.configs.get(name).type === 'count') {
+              const oldValue = options.get(name) as number ?? 0;
+              const newValue = value as number;
+              options.set(name, oldValue + newValue);
+            } else if (this.configs.get(name).type === 'list') {
+              const oldValue = options.get(name) as string[] ?? [];
+              const newValue = value as string[];
+              options.set(name, oldValue.concat(newValue));
+            } else {
+              options.set(name, value);
+            }
+          }
+          if (shouldSkip)
+            i += 1;
+        } else if (this.configs.parseParameters && this.parameterExp.test(arg)) {
+          const [, name, value] = this.parameterExp.exec(arg)!;
+          parameters.set(name, value ?? '');
+        } else {
+          operands.push(arg);
         }
-        if (shouldSkip)
-          i += 1;
-      } else if (this.parameterExp.test(arg)) {
-        const [, name, value] = this.parameterExp.exec(arg)!;
-        parameters.set(name, value ?? '');
-      } else {
-        operands.push(arg);
+      } catch (err) {
+        if (!(err instanceof UnknownOptionError) || !this.configs.allowUnknown)
+          throw err;
       }
     }
 
@@ -150,9 +160,13 @@ export class ArgParser {
     parameters.freeze();
     Object.freeze(operands);
 
-    const result = { options, parameters, operands } as const;
-
-    return Object.freeze(result);
+    if (this.configs.parseParameters) {
+      const result = { options, parameters, operands } as const;
+      return Object.freeze(result);
+    } else {
+      const result = { options, operands } as const;
+      return Object.freeze(result);
+    }
   }
 
   private parseLongOption(arg: string): [string, OptionValue] {
@@ -275,7 +289,10 @@ export class ArgParser {
       name = arg[i] as string;
       value = nextArg ?? null;
       entry = this.configs.get(name);
-      if (entry == null) {
+      if (entry == null && this.configs.allowUnknown) {
+        /* silently skip unknown options */
+        continue;
+      } else if (entry == null) {
         throw new UnknownOptionError(name);
       }
       const tag: OptionType = entry.type;
