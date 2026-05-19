@@ -15,7 +15,6 @@ import {
    NullArgError,
    NullIntError,
    UnknownOptionError,
-   RuntimeError,
 } from './errors.ts';
 import { parseIntStrict } from './utils.ts';
 
