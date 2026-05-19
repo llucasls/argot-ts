@@ -24,6 +24,9 @@ describe('test ParserConfig', () => {
       options: {
         quiet: { type: 'flag' },
         output: { type: 'text' },
+      },
+      parser: {
+        aggregateErrors: true,
       }
     });
 

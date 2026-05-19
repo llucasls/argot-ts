@@ -5,8 +5,17 @@ import {
   parseIntStrict,
   validateEntry,
   validateEntries,
+  validateEntriesAggregate,
 } from '../src/utils.ts';
-import { InvalidIntError } from '../src/errors.ts';
+import {
+  AliasTargetNotFoundError,
+  ConfigError,
+  InvalidIntError,
+  InvalidAliasTargetError,
+  InvalidOptionTypeError,
+  MissingOptionTypeError,
+  MissingOptionPropertyError,
+} from '../src/errors.ts';
 import type { ConfigEntry, ConfigEntries } from '../src/types.ts';
 
 describe('test parseIntStrict', () => {
@@ -55,7 +64,7 @@ describe('test validateEntry', () => {
   test('throw error if entry does not have type', () => {
     expect(() => {
       validateEntry('a', { target: 'x' } as ConfigEntry);
-    }).toThrow(Error);
+    }).toThrow(MissingOptionTypeError);
   });
 
   test('throw error if text default value is not a string', () => {
@@ -90,7 +99,7 @@ describe('test validateEntry', () => {
     const entry = { type: 'alias' };
     expect(() => {
       validateEntry('u', entry as ConfigEntry);
-    }).toThrow(Error);
+    }).toThrow(MissingOptionPropertyError);
   });
 
   test('throw error if alias target value is not a string', () => {
@@ -104,7 +113,7 @@ describe('test validateEntry', () => {
     const entry = { type: 'string' };
     expect(() => {
       validateEntry('version', entry as ConfigEntry);
-    }).toThrow(Error);
+    }).toThrow(InvalidOptionTypeError);
   });
 });
 
@@ -137,6 +146,86 @@ describe('test validateEntries', () => {
 
     expect(() => {
       validateEntries(entries);
-    }).toThrow(Error);
+    }).toThrow(AliasTargetNotFoundError);
+  });
+
+  test('throw error on alias referencing another alias', () => {
+    const entries: ConfigEntries = {
+      strict: { type: 'flag' },
+      s: { type: 'alias', target: 'strict' },
+      S: { type: 'alias', target: 's' },
+    };
+
+    expect(() => {
+      validateEntries(entries);
+    }).toThrow(InvalidAliasTargetError);
+  });
+});
+
+describe('test validateEntriesAggregate', () => {
+  test('do not throw on valid entries', () => {
+    const entries: ConfigEntries = {
+      strict: { type: 'flag' },
+      output: { type: 'text' },
+      logFile: { type: 'text', default: 'access.log' },
+      retries: { type: 'int' },
+      threads: { type: 'int', default: 0 },
+      logLevel: { type: 'count' },
+      tasks: { type: 'list' },
+      path: { type: 'list', sep: ':' },
+      v: { type: 'alias', target: 'logLevel' },
+      s: { type: 'alias', target: 'strict' },
+      o: { type: 'alias', target: 'output' },
+    };
+
+    expect(() => {
+      validateEntriesAggregate(entries);
+    }).not.toThrow();
+  });
+
+  test('throw error if target option is not found', () => {
+    const entries: ConfigEntries = {
+      s: { type: 'alias', target: 'strict' },
+      notStrict: { type: 'flag' },
+    };
+
+    expect(() => {
+      validateEntriesAggregate(entries);
+    }).toThrow(AliasTargetNotFoundError);
+  });
+
+  test('throw error on alias referencing another alias', () => {
+    const entries: ConfigEntries = {
+      strict: { type: 'flag' },
+      s: { type: 'alias', target: 'strict' },
+      S: { type: 'alias', target: 's' },
+    };
+
+    expect(() => {
+      validateEntriesAggregate(entries);
+    }).toThrow(InvalidAliasTargetError);
+  });
+
+  test('throw ConfigError if multiple targets are not found', () => {
+    const entries: ConfigEntries = {
+      notStrict: { type: 'flag' },
+      s: { type: 'alias', target: 'strict' },
+      S: { type: 'alias', target: 'strict' },
+    };
+
+    expect(() => {
+      validateEntriesAggregate(entries);
+    }).toThrow(ConfigError);
+  });
+
+  test('throw ConfigError on multiple wrong options', () => {
+    const entries = {
+      n: { type: 'number' },
+      o: { type: 'string' },
+    };
+
+    expect(() => {
+      validateEntriesAggregate(entries as ConfigEntries);
+    }).toThrow(ConfigError);
   });
 });

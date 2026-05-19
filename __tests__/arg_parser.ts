@@ -89,8 +89,20 @@ describe('test ArgParser', () => {
       CC: 'clang',
       ENV: '',
     }
-    assertMappingEquals(result.parameters, expected);
+    assertMappingEquals(result.parameters!, expected);
     expect(result.operands).toEqual(['=', '=test']);
+  });
+
+  test('parse parameters as normal operands', () => {
+    const parser = new ArgParser(new ParserConfig({
+      options,
+      parser: {
+        parseParameters: false,
+      },
+    }));
+    const result = parser.parse(['CC=clang', 'ENV=', '=', '=test']);
+
+    expect(result.operands).toEqual(['CC=clang', 'ENV=', '=', '=test']);
   });
 
   test('parse flag options', () => {
@@ -328,5 +340,20 @@ describe('test ArgParser', () => {
     expect(() => {
       parser.parse(['-i', '9007199254740992']);
     }).toThrow(UnsafeIntegerError);
+  });
+
+  test('parse arguments with unknown options allowed', () => {
+    const parser = new ArgParser(new ParserConfig({
+      options,
+      parser: {
+        parseParameters: true,
+        allowUnknown: true,
+      },
+    }));
+
+    expect(() => {
+      const result = parser.parse(['--silent', '-xV']);
+      expect(result.operands).toEqual([]);
+    }).not.toThrow(Error);
   });
 });
