@@ -65,6 +65,12 @@ describe('test ArgParser', () => {
     expect(parser).toBeInstanceOf(ArgParser);
   });
 
+  test('throw error on invalid parser config', () => {
+    expect(() => {
+      new ArgParser(options as unknown as ParserConfig);
+    }).toThrow(TypeError);
+  });
+
   test('throw error on invalid input type', () => {
     expect(() => {
       parser.parse('spec.txt' as unknown as string[]);

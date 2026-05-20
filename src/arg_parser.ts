@@ -33,6 +33,9 @@ export class ArgParser {
   private configs: ParserConfig;
 
   constructor(configs: ParserConfig) {
+    if (!(configs instanceof ParserConfig)) {
+      throw new TypeError('input value must be an instance of ParserConfig');
+    }
     this.configs = configs;
   }
 
