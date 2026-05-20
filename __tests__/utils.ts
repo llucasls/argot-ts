@@ -2,6 +2,7 @@ import { expect } from '@std/expect';
 import { describe, test } from '@std/testing/bdd';
 
 import {
+  parseFloatStrict,
   parseIntStrict,
   validateEntry,
   validateEntries,
@@ -10,6 +11,7 @@ import {
 import {
   AliasTargetNotFoundError,
   ConfigError,
+  InvalidFloatError,
   InvalidIntError,
   InvalidAliasTargetError,
   InvalidOptionTypeError,
@@ -45,6 +47,33 @@ describe('test parseIntStrict', () => {
     expect(() => {
       parseIntStrict('six');
     }).toThrow(InvalidIntError);
+  });
+});
+
+describe('test parseFloatStrict', () => {
+  test('return float', () => {
+    expect(parseFloatStrict('212')).toBe(212.0);
+    expect(parseFloatStrict('-12')).toBe(-12.0);
+    expect(parseFloatStrict('.25')).toBe(0.25);
+    expect(parseFloatStrict('1e6')).toBe(1_000_000.0);
+  });
+
+  test('throw error', () => {
+    expect(() => {
+      parseFloatStrict('	2 ');
+    }).toThrow(InvalidFloatError);
+
+    expect(() => {
+      parseFloatStrict('Nan');
+    }).toThrow(InvalidFloatError);
+
+    expect(() => {
+      parseFloatStrict('Infinity');
+    }).toThrow(InvalidFloatError);
+
+    expect(() => {
+      parseFloatStrict('1e500');
+    }).toThrow(InvalidFloatError);
   });
 });
 
@@ -85,6 +114,20 @@ describe('test validateEntry', () => {
     const entry = { type: 'int', default: 12.5 };
     expect(() => {
       validateEntry('jobs', entry as ConfigEntry);
+    }).toThrow(TypeError);
+  });
+
+  test('throw error if float default value is not a number', () => {
+    const entry = { type: 'float', default: '12.5' };
+    expect(() => {
+      validateEntry('scale', entry as ConfigEntry);
+    }).toThrow(TypeError);
+  });
+
+  test('throw error if float default value is not finite', () => {
+    const entry = { type: 'float', default: Infinity };
+    expect(() => {
+      validateEntry('scale', entry as ConfigEntry);
     }).toThrow(TypeError);
   });
 

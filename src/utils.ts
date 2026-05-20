@@ -2,6 +2,7 @@ import {
   AliasTargetNotFoundError,
   ConfigError,
   InvalidAliasTargetError,
+  InvalidFloatError,
   InvalidIntError,
   InvalidOptionTypeError,
   MissingOptionPropertyError,
@@ -12,6 +13,7 @@ import type {
   ConfigEntry,
   OptionType,
   AliasEntry,
+  FloatEntry,
   TextEntry,
   IntEntry,
   ListEntry,
@@ -34,6 +36,32 @@ export function parseIntStrict(value: string): number {
   const num = Number(value);
   if (!Number.isSafeInteger(num)) {
     throw new UnsafeIntegerError(num);
+  }
+
+  return num;
+}
+
+/**
+ * Parses a string as a floating-point number.
+ * The value must consist only of:
+ * - an optional sign
+ * - digits
+ * - an optional fractional part
+ * - an optional exponent
+ *
+ * Whitespace, Infinity and NaN are not allowed.
+ *
+ * Throws:
+ * - InvalidFloatError if the value is not a valid float string
+ */
+export function parseFloatStrict(value: string): number {
+  if (!/^(-|\+)?(\d+(\.\d+)?|\.\d+)([eE](-|\+)?\d+)?$/.test(value)) {
+    throw new InvalidFloatError(value);
+  }
+
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    throw new InvalidFloatError(value);
   }
 
   return num;
@@ -81,6 +109,16 @@ export function validateEntry(name: string, entry: ConfigEntry): void {
       const { default: def } = entry as IntEntry;
       if (typeof def !== 'number' || !Number.isInteger(def))
         throw new TypeError('default value must be an integer');
+
+      break;
+    }
+    case 'float': {
+      if (!Object.hasOwn(entry, 'default'))
+        break;
+
+      const { default: def } = entry as FloatEntry;
+      if (typeof def !== 'number' || !Number.isFinite(def))
+        throw new TypeError('default value must be a number');
 
       break;
     }

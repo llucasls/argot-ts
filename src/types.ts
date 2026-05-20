@@ -6,6 +6,7 @@ export type OptionType =
   | 'flag'
   | 'text'
   | 'int'
+  | 'float'
   | 'count'
   | 'list'
   | 'alias';
@@ -19,6 +20,7 @@ export type AliasType =
   | 'flag'
   | 'text'
   | 'int'
+  | 'float'
   | 'count'
   | 'list';
 
@@ -46,6 +48,13 @@ export type TextEntry = { type: 'text'; default?: string };
 export type IntEntry = { type: 'int'; default?: number };
 
 /**
+ * Float option entry.
+ * A float option takes any value that can be represented as a
+ * floating point number. Integer values are converted to floats.
+ */
+export type FloatEntry = { type: 'float', default?: number };
+
+/**
  * Count option entry.
  * A count option increments a numeric counter each time the option
  * is provided.
@@ -67,10 +76,14 @@ export type ListEntry = { type: 'list'; sep?: string };
  */
 export type AliasEntry = { type: 'alias'; target: string };
 
+/**
+ * A configuration entry representing a single command-line option.
+ */
 export type ConfigEntry = (
   | FlagEntry
   | TextEntry
   | IntEntry
+  | FloatEntry
   | CountEntry
   | ListEntry
   | AliasEntry

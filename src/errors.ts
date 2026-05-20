@@ -48,6 +48,23 @@ export class InvalidIntError extends RuntimeError {
 }
 
 /**
+ * Invalid float argument error.
+ * Raised when an option of type "float" is provided with an associated
+ * value that cannot be parsed as a number.
+ * This error only applies when a value is present. Missing values are
+ * reported using NullFloatError.
+ */
+export class InvalidFloatError extends RuntimeError {
+  public value: string;
+
+  constructor(value: string) {
+    super(`'${value}' is not a valid integer`);
+    this.value = value;
+    Object.freeze(this);
+  }
+}
+
+/**
  * Unsafe integer error.
  * Raised when a parsed integer cannot be safely represented
  * by the underlying runtime.
@@ -105,6 +122,32 @@ export class NullIntError extends RuntimeError {
     const msg = target
       ? `option '${name}' (alias for '${target}') requires an integer number argument`
       : `option '${name}' requires an integer number argument`;
+    super(msg);
+    this.option = name;
+    if (target) {
+      this.target = target;
+    }
+    Object.freeze(this);
+  }
+}
+
+/**
+ * Missing float argument error.
+ * Raised when an option of type "float" is provided without an
+ * associated value.
+ * This error does not cover invalid float values. Invalid values
+ * are reported using InvalidFloatError.
+ * If the option is an alias, the error message includes both the
+ * alias name and its target.
+ */
+export class NullFloatError extends RuntimeError {
+  public option: string;
+  public target?: string;
+
+  constructor(name: string, target?: string) {
+    const msg = target
+      ? `option '${name}' (alias for '${target}') requires a numeric argument`
+      : `option '${name}' requires a numeric argument`;
     super(msg);
     this.option = name;
     if (target) {

@@ -2,6 +2,7 @@ import type {
   AliasEntry,
   AliasType,
   ConfigEntry,
+  FloatEntry,
   IntEntry,
   ListEntry,
   OptionType,
@@ -9,14 +10,15 @@ import type {
   ParseResult,
   TextEntry,
 } from './types.ts';
-import type { ParserConfig } from './parser_config.ts';
+import { ParserConfig } from './parser_config.ts';
 import { Options, Parameters, Operands } from './types.ts';
 import {
    NullArgError,
+   NullFloatError,
    NullIntError,
    UnknownOptionError,
 } from './errors.ts';
-import { parseIntStrict } from './utils.ts';
+import { parseFloatStrict, parseIntStrict } from './utils.ts';
 
 /**
  * Command-line argument parser.
@@ -215,6 +217,16 @@ export class ArgParser {
 
         throw new NullIntError(name);
       }
+      case 'float': {
+        if (value != null && value !== '') {
+          return [name, parseFloatStrict(value)];
+        } else if (Object.hasOwn(entry, 'default')) {
+          const { default: value } = entry as FloatEntry;
+          return [name, value!];
+        }
+
+        throw new NullFloatError(name);
+      }
       case 'count': {
         if (value != null)
           return [name, parseIntStrict(value)];
@@ -257,6 +269,16 @@ export class ArgParser {
             }
 
             throw new NullIntError(name, target);
+          }
+          case 'float': {
+            if (value != null && value !== '') {
+              return [target, parseFloatStrict(value)];
+            } else if (Object.hasOwn(targetEntry, 'default')) {
+              const { default: value } = targetEntry as FloatEntry;
+              return [target, value!];
+            }
+
+            throw new NullFloatError(name, target);
           }
           case 'count': {
             if (value != null)
@@ -336,6 +358,22 @@ export class ArgParser {
 
           throw new NullIntError(name);
         }
+        case 'float': {
+          if (i < n - 1) {
+            value = arg.slice(i + 1, n);
+            pairs[name] = parseFloatStrict(value);
+            return [false, pairs];
+          } else if (Object.hasOwn(entry, 'default')) {
+            const { default: value } = entry as FloatEntry;
+            pairs[name] = value!;
+            return [false, pairs];
+          } else if (value != null) {
+            pairs[name] = parseFloatStrict(value);
+            return [true, pairs];
+          }
+
+          throw new NullFloatError(name);
+        }
         case 'count': {
           const oldValue = pairs[name] as number ?? 0;
           pairs[name] = oldValue + 1;
@@ -399,6 +437,22 @@ export class ArgParser {
               }
 
               throw new NullIntError(name, target);
+            }
+            case 'float': {
+              if (i < n - 1) {
+                value = arg.slice(i + 1, n);
+                pairs[target] = parseFloatStrict(value);
+                return [false, pairs];
+              } else if (Object.hasOwn(targetEntry, 'default')) {
+                const { default: value } = targetEntry as FloatEntry;
+                pairs[target] = value!;
+                return [false, pairs];
+              } else if (value != null) {
+                pairs[target] = parseFloatStrict(value);
+                return [true, pairs];
+              }
+
+              throw new NullFloatError(name, target);
             }
             case 'count': {
               const oldValue = pairs[target] as number ?? 0;

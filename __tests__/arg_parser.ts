@@ -8,6 +8,7 @@ import type { ConfigEntries } from '../src/types.ts';
 import { Options, Parameters, Operands } from '../src/types.ts';
 import {
   NullArgError,
+  NullFloatError,
   NullIntError,
   UnknownOptionError,
   UnsafeIntegerError,
@@ -156,6 +157,74 @@ describe('test ArgParser', () => {
     };
 
     assertMappingEquals(result.options, expected);
+  });
+
+  test('parse float options', () => {
+    const parser = new ArgParser(new ParserConfig({
+      options: {
+        opacity: { type: 'float' },
+        O: { type: 'alias', target: 'opacity' },
+        z: { type: 'float' },
+        zoom: { type: 'alias', target: 'z' },
+        scale: { type: 'float', default: 1.0 },
+        S: { type: 'float', default: 1.0 },
+        s: { type: 'alias', target: 'S' },
+        'bg-scale': { type: 'alias', target: 'scale' },
+        'bg-opacity': { type: 'alias', target: 'opacity' },
+      }
+    }));
+
+    let result = parser.parse(['-O', '0.95', '-S1.25', '--zoom=1.5']);
+    assertMappingEquals(result.options, {
+      opacity: 0.95,
+      S: 1.25,
+      z: 1.5,
+    });
+
+    result = parser.parse([
+      '--opacity=0.8',
+      '-z1',
+      '--scale=2',
+    ]);
+    assertMappingEquals(result.options, {
+      opacity: 0.8,
+      z: 1.0,
+      scale: 2.0,
+    });
+
+    result = parser.parse(['--scale', '-S']);
+    assertMappingEquals(result.options, {
+      scale: 1.0,
+      S: 1.0
+    });
+
+    result = parser.parse(['--bg-scale', '-s']);
+    assertMappingEquals(result.options, {
+      scale: 1.0,
+      S: 1.0
+    });
+
+    result = parser.parse(['-z', '2', '-O.95']);
+    assertMappingEquals(result.options, {
+      z: 2.0,
+      opacity: 0.95,
+    });
+
+    expect(() => {
+      parser.parse(['--opacity']);
+    }).toThrow(NullFloatError);
+
+    expect(() => {
+      parser.parse(['-z']);
+    }).toThrow(NullFloatError);
+
+    expect(() => {
+      parser.parse(['-O']);
+    }).toThrow(NullFloatError);
+
+    expect(() => {
+      parser.parse(['--bg-opacity']);
+    }).toThrow(NullFloatError);
   });
 
   test('parse count options', () => {
