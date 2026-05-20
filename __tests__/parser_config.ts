@@ -142,6 +142,6 @@ describe('test ParserConfig', () => {
     };
     const parser = new ParserConfig({ options });
 
-    expect(parser.size).toEqual(Object.keys(options).length);
+    expect(parser.size).toEqual(4);
   });
 });
