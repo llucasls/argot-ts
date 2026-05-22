@@ -173,6 +173,45 @@ export class ArgParser {
     }
   }
 
+  public slice(argList: string[], index: number): [string[], string[]] {
+    let i = 0;
+    let operands = 0;
+    let stopParsing = false;
+    for (const n = argList.length; i < n; i++) {
+      if (operands >= index)
+        break;
+
+      const arg: string = argList[i];
+      if (arg === '--' && !stopParsing) {
+        stopParsing = true;
+        continue;
+      }
+
+      if (stopParsing) {
+        operands += 1;
+        continue;
+      }
+
+      try {
+        if (this.longOptExp.test(arg)) {
+          this.parseLongOption(arg);
+        } else if (this.shortOptExp.test(arg)) {
+          const [shouldSkip,] = this.parseShortOption(arg, argList[i+1] ?? null);
+          if (shouldSkip)
+            i += 1;
+        } else if (this.configs.parseParameters && this.parameterExp.test(arg)) {
+          continue;
+        } else {
+          operands += 1;
+        }
+      } catch (err) {
+        if (!(err instanceof UnknownOptionError) || !this.configs.allowUnknown)
+          throw err;
+      }
+    }
+    return [argList.slice(0, i), argList.slice(i)];
+  }
+
   private parseLongOption(arg: string): [string, OptionValue] {
     const offset = 2;
 

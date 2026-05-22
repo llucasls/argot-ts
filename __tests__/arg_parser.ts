@@ -432,3 +432,194 @@ describe('test ArgParser', () => {
     }).not.toThrow(Error);
   });
 });
+
+describe('test slice', () => {
+  test('separate head and tail arrays', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+      },
+      parser: {
+        parseParameters: true,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    const url = 'https://github.com/llucasls/bare-estate.git';
+    const input = [
+      'estate',
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate',
+    ];
+
+    let [head, tail] = parser.slice(input, 0);
+    expect(head).toEqual([]);
+    expect(tail).toEqual([
+      'estate',
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate'
+    ]);
+
+    [head, tail] = parser.slice(input, 1);
+    expect(head).toEqual(['estate']);
+    expect(tail).toEqual([
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate'
+    ]);
+
+    [head, tail] = parser.slice(input, 2);
+    expect(head).toEqual(['estate', 'GIT_DIR=some_dir', 'clone']);
+    expect(tail).toEqual(['-r', 'bare_estate', url, 'bare-estate']);
+
+    [head, tail] = parser.slice(input, 3);
+    expect(head).toEqual([
+      'estate',
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url
+    ]);
+    expect(tail).toEqual(['bare-estate']);
+  });
+
+  test('separate head and tail without parsing parameters', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+        'dry-run': { type: 'flag' },
+      },
+      parser: {
+        parseParameters: false,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    const url = 'https://github.com/llucasls/bare-estate.git';
+    const input = [
+      'estate',
+      '--dry-run',
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate',
+    ];
+
+    let [head, tail] = parser.slice(input, 0);
+    expect(head).toEqual([]);
+    expect(tail).toEqual([
+      'estate',
+      '--dry-run',
+      'GIT_DIR=some_dir',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate'
+    ]);
+
+    [head, tail] = parser.slice(input, 2);
+    expect(head).toEqual(['estate', '--dry-run', 'GIT_DIR=some_dir']);
+    expect(tail).toEqual(['clone', '-r', 'bare_estate', url, 'bare-estate']);
+  });
+
+  test('separate head and tail with unknown options', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+      },
+      parser: {
+        allowUnknown: true,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    const url = 'https://github.com/llucasls/bare-estate.git';
+    const input = [
+      'estate',
+      '--dry-run',
+      'clone',
+      '-r',
+      'bare_estate',
+      url,
+      'bare-estate',
+    ];
+
+    const [head, tail] = parser.slice(input, 2);
+    expect(head).toEqual(['estate', '--dry-run', 'clone']);
+    expect(tail).toEqual(['-r', 'bare_estate', url, 'bare-estate']);
+  });
+
+  test('separate head and tail with -- terminator', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+        'dry-run': { type: 'flag' },
+        n: { type: 'alias', target: 'dry-run' },
+      },
+      parser: {
+        parseParameters: true,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    let [head, tail] = parser.slice(['estate', '-r', 'vim', 'init'], 2);
+    expect(head).toEqual(['estate', '-r', 'vim', 'init']);
+    expect(tail).toEqual([]);
+
+    [head, tail] = parser.slice(['estate', '--', '-r', 'vim', 'init'], 2);
+    expect(head).toEqual(['estate', '--', '-r']);
+    expect(tail).toEqual(['vim', 'init']);
+  });
+
+  test('throw error when slicing input with unknown option', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+      },
+      parser: {
+        allowUnknown: false,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    expect(() => {
+      parser.slice(['estate', '-n', 'GIT_DIR=~/git/bare', 'init'], 1);
+    }).not.toThrow(Error);
+    expect(() => {
+      parser.slice(['estate', '-n', 'GIT_DIR=~/git/bare', 'init'], 2);
+    }).toThrow(UnknownOptionError);
+    expect(() => {
+      parser.slice(['estate', 'init', '-r'], 3);
+    }).toThrow(NullArgError);
+  });
+});
