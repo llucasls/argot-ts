@@ -151,8 +151,10 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
    * Throws if the mapping is frozen.
    */
   override set(key: K, value: V): this {
-    if (this.isFrozen)
-      throw new TypeError('you cannot modify option values');
+    if (this.isFrozen) {
+      const name = this.constructor.name.toLowerCase();
+      throw new TypeError(`you cannot modify parsed ${name}`);
+    }
     return super.set(key, value);
   }
 
@@ -161,8 +163,10 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
    * Throws if the mapping is frozen.
    */
   override delete(key: K): boolean {
-    if (this.isFrozen)
-      throw new TypeError('you cannot delete parsed options');
+    if (this.isFrozen) {
+      const name = this.constructor.name.toLowerCase();
+      throw new TypeError(`you cannot delete parsed ${name}`);
+    }
     return super.delete(key);
   }
 
@@ -171,8 +175,10 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
    * Throws if the mapping is frozen.
    */
   override clear(): void {
-    if (this.isFrozen)
-      throw new TypeError('you cannot delete parsed options');
+    if (this.isFrozen) {
+      const name = this.constructor.name.toLowerCase();
+      throw new TypeError(`you cannot delete parsed ${name}`);
+    }
     super.clear();
   }
 
@@ -200,10 +206,10 @@ abstract class ResultMapping<K, V> extends Map<K, V> {
  */
 abstract class ResultList<T> extends Array<T> {
   constructor(args?: T[]) {
-    const n = (args as T[])?.length ?? 0;
-    super(n);
-    for (let i = 0; i < n; i++) {
-      this[i] = (args as T[])[i];
+    const length = (args as T[])?.length ?? 0;
+    super(length);
+    for (let i = 0; i < length; i++) {
+      this[i] = (args as T[])[i]!;
     }
 
     return new Proxy(this, {

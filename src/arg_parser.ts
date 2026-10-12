@@ -104,41 +104,48 @@ export class ArgParser {
 
     for (let i = 0, n = argList.length; i < n; i++) {
       const arg: string = argList[i]!;
-      if (arg === '--' && !stopParsing) {
-        stopParsing = true;
-        continue;
-      }
 
       if (stopParsing) {
         operands.push(arg);
         continue;
       }
 
+      if (arg === '--') {
+        stopParsing = true;
+        continue;
+      }
+
       try {
         if (this.longOptExp.test(arg)) {
-          const [name, value] = this.parseLongOption(arg);
-          if (this.configs.get(name).type === 'count') {
+          const {
+            name,
+            value,
+            shouldSkip
+          } = this.parseLongOption(arg, argList[i+1] ?? null);
+          if (this.configs.get(name)?.type === 'count') {
             const oldValue = options.get(name) as number ?? 0;
             const newValue = value as number;
             options.set(name, oldValue + newValue);
-          } else if (this.configs.get(name).type === 'list') {
+          } else if (this.configs.get(name)?.type === 'list') {
             const oldValue = options.get(name) as string[] ?? [];
             const newValue = value as string[];
             options.set(name, oldValue.concat(newValue));
           } else {
             options.set(name, value);
           }
+          if (shouldSkip)
+            i += 1;
         } else if (this.shortOptExp.test(arg)) {
           const [
             shouldSkip,
             pairs,
           ] = this.parseShortOption(arg, argList[i+1] ?? null);
           for (const [name, value] of Object.entries(pairs)) {
-            if (this.configs.get(name).type === 'count') {
+            if (this.configs.get(name)?.type === 'count') {
               const oldValue = options.get(name) as number ?? 0;
               const newValue = value as number;
               options.set(name, oldValue + newValue);
-            } else if (this.configs.get(name).type === 'list') {
+            } else if (this.configs.get(name)?.type === 'list') {
               const oldValue = options.get(name) as string[] ?? [];
               const newValue = value as string[];
               options.set(name, oldValue.concat(newValue));
@@ -150,7 +157,7 @@ export class ArgParser {
             i += 1;
         } else if (this.configs.parseParameters && this.parameterExp.test(arg)) {
           const [, name, value] = this.parameterExp.exec(arg)!;
-          parameters.set(name, value ?? '');
+          parameters.set(name!, value ?? '');
         } else {
           operands.push(arg);
         }
@@ -174,14 +181,14 @@ export class ArgParser {
   }
 
   public slice(argList: string[], index: number): [string[], string[]] {
-    let i = 0;
+    let i: number;
     let operands = 0;
     let stopParsing = false;
-    for (const n = argList.length; i < n; i++) {
+    for (i = 0; i < argList.length; i++) {
       if (operands >= index)
         break;
 
-      const arg: string = argList[i];
+      const arg: string = argList[i]!;
       if (arg === '--' && !stopParsing) {
         stopParsing = true;
         continue;
@@ -194,7 +201,9 @@ export class ArgParser {
 
       try {
         if (this.longOptExp.test(arg)) {
-          this.parseLongOption(arg);
+          const { shouldSkip } = this.parseLongOption(arg, argList[i+1] ?? null);
+          if (shouldSkip)
+            i += 1;
         } else if (this.shortOptExp.test(arg)) {
           const [shouldSkip,] = this.parseShortOption(arg, argList[i+1] ?? null);
           if (shouldSkip)
@@ -212,7 +221,11 @@ export class ArgParser {
     return [argList.slice(0, i), argList.slice(i)];
   }
 
-  private parseLongOption(arg: string): [string, OptionValue] {
+  private parseLongOption(arg: string, nextArg: string | null): {
+    name: string;
+    value: OptionValue;
+    shouldSkip: boolean;
+  } {
     const offset = 2;
 
     let name: string;
@@ -226,7 +239,7 @@ export class ArgParser {
       value = null;
     }
 
-    const entry: ConfigEntry = this.configs.get(name);
+    const entry: ConfigEntry = this.configs.get(name)!;
     if (entry == null) {
       throw new UnknownOptionError(name);
     }
@@ -234,103 +247,151 @@ export class ArgParser {
 
     switch (tag) {
       case 'flag': {
-        return [name, true];
+        return { name, value: true, shouldSkip: false };
       }
       case 'text': {
         if (value != null) {
-          return [name, value];
+          return { name, value, shouldSkip: false };
         } else if (Object.hasOwn(entry, 'default')) {
           const { default: value } = entry as TextEntry;
-          return [name, value!];
+          return { name, value: value!, shouldSkip: false };
+        } else if (nextArg != null) {
+          return { name, value: nextArg, shouldSkip: true };
         }
 
         throw new NullArgError(name);
       }
       case 'int': {
-        if (value != null && value !== '') {
-          return [name, parseIntStrict(value)];
+        if (value != null) {
+          return { name, value: parseIntStrict(value), shouldSkip: false };
         } else if (Object.hasOwn(entry, 'default')) {
           const { default: value } = entry as IntEntry;
-          return [name, value!];
+          return { name, value: value!, shouldSkip: false };
+        } else if (nextArg != null) {
+          return { name, value: parseIntStrict(nextArg), shouldSkip: true };
         }
 
         throw new NullIntError(name);
       }
       case 'float': {
-        if (value != null && value !== '') {
-          return [name, parseFloatStrict(value)];
+        if (value != null) {
+          return { name, value: parseFloatStrict(value), shouldSkip: false };
         } else if (Object.hasOwn(entry, 'default')) {
           const { default: value } = entry as FloatEntry;
-          return [name, value!];
+          return { name, value: value!, shouldSkip: false };
+        } else if (nextArg != null) {
+          return { name, value: parseFloatStrict(nextArg), shouldSkip: true };
         }
 
         throw new NullFloatError(name);
       }
       case 'count': {
         if (value != null)
-          return [name, parseIntStrict(value)];
-        return [name, 1];
+          return { name, value: parseIntStrict(value), shouldSkip: false };
+        return { name, value: 1, shouldSkip: false };
       }
       case 'list': {
         if (value === '') {
-          return [name, []];
+          return { name, value: [], shouldSkip: false };
         } else if (value != null) {
           const { sep } = entry as ListEntry;
-          return [name, value.split(sep ?? ',')];
+          return { name, value: value.split(sep ?? ','), shouldSkip: false };
+        } else if (nextArg != null) {
+          const { sep } = entry as ListEntry;
+          return { name, value: nextArg.split(sep ?? ','), shouldSkip: true };
         }
+
         throw new NullArgError(name);
       }
       case 'alias': {
         const { target } = entry as AliasEntry;
-        const targetEntry: ConfigEntry = this.configs.get(target);
+        const targetEntry: ConfigEntry = this.configs.get(target)!;
         const targetType = targetEntry.type as AliasType;
 
         switch (targetType) {
           case 'flag': {
-            return [target, true];
+            return { name: target, value: true, shouldSkip: false };
           }
           case 'text': {
             if (value != null) {
-              return [target, value];
+              return { name: target, value, shouldSkip: false };
             } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as TextEntry;
-              return [target, value!];
+              return { name: target, value: value!, shouldSkip: false };
+            } else if (nextArg != null) {
+              return { name: target, value: nextArg, shouldSkip: true };
             }
 
             throw new NullArgError(name, target);
           }
           case 'int': {
-            if (value != null && value !== '') {
-              return [target, parseIntStrict(value)];
+            if (value != null) {
+              return {
+                name: target,
+                value: parseIntStrict(value),
+                shouldSkip: false,
+              };
             } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as IntEntry;
-              return [target, value!];
+              return { name: target, value: value!, shouldSkip: false };
+            } else if (nextArg != null) {
+              return {
+                name: target,
+                value: parseIntStrict(nextArg),
+                shouldSkip: true
+              };
             }
 
             throw new NullIntError(name, target);
           }
           case 'float': {
-            if (value != null && value !== '') {
-              return [target, parseFloatStrict(value)];
+            if (value != null) {
+              return {
+                name: target,
+                value: parseFloatStrict(value),
+                shouldSkip: false,
+              };
             } else if (Object.hasOwn(targetEntry, 'default')) {
               const { default: value } = targetEntry as FloatEntry;
-              return [target, value!];
+              return { name: target, value: value!, shouldSkip: false };
+            } else if (nextArg != null) {
+              return {
+                name: target,
+                value: parseFloatStrict(nextArg),
+                shouldSkip: true,
+              };
             }
 
             throw new NullFloatError(name, target);
           }
           case 'count': {
             if (value != null)
-              return [target, parseIntStrict(value)];
-            return [target, 1];
+              return {
+                name: target,
+                value: parseIntStrict(value),
+                shouldSkip: false
+              };
+            return { name: target, value: 1, shouldSkip: false };
           }
           case 'list': {
             if (value === '') {
-              return [target, []];
+              return { name: target, value: [], shouldSkip: false };
             } else if (value != null) {
               const { sep } = targetEntry as ListEntry;
-              return [target, value.split(sep ?? ',')];
+              return {
+                name: target,
+                value: value.split(sep ?? ','),
+                shouldSkip: false
+              };
+            } else if (nextArg != null) {
+              const { sep } = targetEntry as ListEntry;
+              return {
+                name: target,
+                value: nextArg.split(sep ?? ','),
+                shouldSkip: true
+              };
             }
+
             throw new NullArgError(name, target);
           }
         }
@@ -351,7 +412,7 @@ export class ArgParser {
     for (let i = 1, n = arg.length; i < n; i++) {
       name = arg[i] as string;
       value = nextArg ?? null;
-      entry = this.configs.get(name);
+      entry = this.configs.get(name)!;
       if (entry == null && this.configs.allowUnknown) {
         /* silently skip unknown options */
         continue;
@@ -437,7 +498,7 @@ export class ArgParser {
         }
         case 'alias': {
           const { target } = entry as AliasEntry;
-          const targetEntry: ConfigEntry = this.configs.get(target);
+          const targetEntry: ConfigEntry = this.configs.get(target)!;
           const targetType = targetEntry.type as AliasType;
 
           switch (targetType) {

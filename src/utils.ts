@@ -176,7 +176,7 @@ export function validateEntries(entries: ConfigEntries): void {
     if (!Object.hasOwn(entries, target)) {
       throw new AliasTargetNotFoundError(name, target);
     }
-    const targetEntry: ConfigEntry = entries[target];
+    const targetEntry: ConfigEntry = entries[target]!;
     if (targetEntry.type === 'alias') {
       throw new InvalidAliasTargetError(name, target);
     }
@@ -206,7 +206,7 @@ export function validateEntriesAggregate(entries: ConfigEntries): void {
       error.push(new AliasTargetNotFoundError(name, target));
       continue;
     }
-    const targetEntry: ConfigEntry = entries[target];
+    const targetEntry: ConfigEntry = entries[target]!;
     if (targetEntry.type === 'alias') {
       error.push(new InvalidAliasTargetError(name, target));
     }

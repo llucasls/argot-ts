@@ -128,6 +128,7 @@ describe('test ArgParser', () => {
       'users',
       '-e',
     ]);
+
     const expected = {
       output: 'doc.txt',
       logfile: 'access.log',
@@ -190,6 +191,20 @@ describe('test ArgParser', () => {
       opacity: 0.8,
       z: 1.0,
       scale: 2.0,
+    });
+
+    result = parser.parse([
+      '--opacity',
+      '0.8',
+      '-z',
+      '1',
+      '--scale',
+      '2',
+    ]);
+    assertMappingEquals(result.options, {
+      opacity: 0.8,
+      z: 1.0,
+      scale: 1.0,
     });
 
     result = parser.parse(['--scale', '-S']);
@@ -404,7 +419,7 @@ describe('test ArgParser', () => {
 
   test('throw error on unsupported options', () => {
     expect(() => {
-      parser.parse(['esto', '--non-ecxiste']);
+      parser.parse(['esto', '--no-ecxiste']);
     }).toThrow(UnknownOptionError);
     expect(() => {
       parser.parse(['-Z']);
@@ -431,6 +446,51 @@ describe('test ArgParser', () => {
       expect(result.operands).toEqual([]);
     }).not.toThrow(Error);
   });
+
+  test('parse long options consuming next argument', () => {
+    let result = parser.parse([
+      '--output',
+      'diagnostics.log',
+      '--retries',
+      '4',
+      '--tasks',
+      'check,test,clean',
+    ]);
+
+    assertMappingEquals(result.options, {
+      output: 'diagnostics.log',
+      retries: 4,
+      tasks: ['check', 'test', 'clean'],
+    });
+
+    result = parser.parse([
+      '--output-file',
+      'diagnostics.log',
+      '--retry',
+      '4',
+      '--targets',
+      'check,test,clean',
+    ]);
+
+    assertMappingEquals(result.options, {
+      output: 'diagnostics.log',
+      retries: 4,
+      t: ['check', 'test', 'clean'],
+    });
+
+    {
+      const parser = new ArgParser(new ParserConfig({
+        options: {
+          S: { type: 'float' },
+          scale: { type: 'alias', target: 'S' }
+        }
+      }));
+
+      const result = parser.parse(['--scale', '1.2']);
+
+      assertMappingEquals(result.options, { S: 1.2 });
+    }
+  });
 });
 
 describe('test slice', () => {
@@ -449,7 +509,7 @@ describe('test slice', () => {
     const parser = new ArgParser(configs);
 
     const url = 'https://github.com/llucasls/bare-estate.git';
-    const input = [
+    let input = [
       'estate',
       'GIT_DIR=some_dir',
       'clone',
@@ -496,6 +556,20 @@ describe('test slice', () => {
       url
     ]);
     expect(tail).toEqual(['bare-estate']);
+
+    input = [
+      'estate',
+      'GIT_DIR=some_dir',
+      'clone',
+      '--repo',
+      'bare_estate',
+      url,
+      'bare-estate',
+    ];
+
+    [head, tail] = parser.slice(input, 2);
+    expect(head).toEqual(['estate', 'GIT_DIR=some_dir', 'clone']);
+    expect(tail).toEqual(['--repo', 'bare_estate', url, 'bare-estate']);
   });
 
   test('separate head and tail without parsing parameters', () => {
@@ -506,6 +580,7 @@ describe('test slice', () => {
         r: { type: 'alias', target: 'repo' },
         d: { type: 'alias', target: 'git-dir' },
         'dry-run': { type: 'flag' },
+        n: { type: 'alias', target: 'dry-run' },
       },
       parser: {
         parseParameters: false,
@@ -514,7 +589,7 @@ describe('test slice', () => {
     const parser = new ArgParser(configs);
 
     const url = 'https://github.com/llucasls/bare-estate.git';
-    const input = [
+    let input = [
       'estate',
       '--dry-run',
       'GIT_DIR=some_dir',
@@ -541,6 +616,21 @@ describe('test slice', () => {
     [head, tail] = parser.slice(input, 2);
     expect(head).toEqual(['estate', '--dry-run', 'GIT_DIR=some_dir']);
     expect(tail).toEqual(['clone', '-r', 'bare_estate', url, 'bare-estate']);
+
+    input = [
+      'estate',
+      '--repo',
+      'bare_estate',
+      '-n',
+      'GIT_DIR=some_dir',
+      'clone',
+      url,
+      'bare-estate',
+    ];
+
+    [head, tail] = parser.slice(input, 2);
+    expect(head).toEqual(['estate', '--repo', 'bare_estate', '-n', 'GIT_DIR=some_dir']);
+    expect(tail).toEqual(['clone', url, 'bare-estate']);
   });
 
   test('separate head and tail with unknown options', () => {
@@ -620,6 +710,27 @@ describe('test slice', () => {
     }).toThrow(UnknownOptionError);
     expect(() => {
       parser.slice(['estate', 'init', '-r'], 3);
+    }).toThrow(NullArgError);
+  });
+
+  test('throw error on option missing associated value', () => {
+    const configs = new ParserConfig({
+      options: {
+        repo: { type: 'text' },
+        'git-dir': { type: 'text' },
+        r: { type: 'alias', target: 'repo' },
+        d: { type: 'alias', target: 'git-dir' },
+      },
+      parser: {
+        allowUnknown: false,
+      }
+    });
+    const parser = new ArgParser(configs);
+
+    const input = ['--repo'];
+
+    expect(() => {
+      parser.slice(input, 1);
     }).toThrow(NullArgError);
   });
 });

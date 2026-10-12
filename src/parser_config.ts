@@ -63,7 +63,7 @@ export class ParserConfig {
     return Object.entries(this.#entries);
   }
 
-  public get(key: string): ConfigEntry {
+  public get(key: string): ConfigEntry | undefined {
     return this.#entries[key];
   }
 
