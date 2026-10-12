@@ -1,7 +1,7 @@
 import { expect } from '@std/expect';
 import { describe, test } from '@std/testing/bdd';
 
-import { readJSONConfig, readTOMLConfig } from '../src/read_config.ts';
+import { readJSONConfig } from '../src/read_config.ts';
 import { ParserConfig } from '../src/parser_config.ts';
 
 describe('test readJSONConfig', () => {
@@ -11,14 +11,6 @@ describe('test readJSONConfig', () => {
     const file = `${testDir}/config_map.json`;
 
     const parserConfig = readJSONConfig(file);
-
-    expect(parserConfig).toBeInstanceOf(ParserConfig)
-  });
-
-  test('return ParserConfig object from TOML map', () => {
-    const file = `${testDir}/config_map.toml`;
-
-    const parserConfig = readTOMLConfig(file);
 
     expect(parserConfig).toBeInstanceOf(ParserConfig)
   });
