@@ -67,6 +67,14 @@
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/expect@^1.0.19",
       "jsr:@std/testing@^1.0.17"
-    ]
+    ],
+    "packageJson": {
+      "dependencies": [
+        "npm:@types/node@^26.6.4",
+        "npm:esbuild@~0.28.2",
+        "npm:expect@^30.5.2",
+        "npm:typescript@^7.0.2"
+      ]
+    }
   }
 }

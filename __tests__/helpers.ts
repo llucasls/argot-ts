@@ -1,4 +1,4 @@
-import { assertEquals, assertObjectMatch } from '@std/assert';
+import { deepStrictEqual as assertEquals, partialDeepStrictEqual as assertObjectMatch } from 'node:assert/strict';
 
 export function assertMappingMatches<K extends PropertyKey, V>(
   actual: Map<K, V>,
@@ -11,7 +11,7 @@ export function assertMappingMatches<K extends PropertyKey, V>(
     actualObj[key] = value;
   }
 
-  assertObjectMatch(actualObj, expected, msg);
+  assertObjectMatch(actualObj, expected, msg ?? 'Values are not equal');
 }
 
 export function assertMappingEquals<K extends PropertyKey, V>(
@@ -25,5 +25,6 @@ export function assertMappingEquals<K extends PropertyKey, V>(
     actualObj[key] = value;
   }
 
-  assertEquals(actualObj, expected, msg);
+  assertEquals(actualObj, expected, msg ?? 'Values are not equal');
+  //assertEquals(actualObj, expected, msg);
 }

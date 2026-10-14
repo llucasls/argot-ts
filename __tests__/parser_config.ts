@@ -1,5 +1,5 @@
-import { expect } from '@std/expect';
-import { describe, test } from '@std/testing/bdd';
+import { expect } from 'expect';
+import { describe, test } from 'node:test';
 
 import { ParserConfig } from '../src/parser_config.ts';
 import type { ConfigEntries, ParserOptions } from '../src/types.ts';

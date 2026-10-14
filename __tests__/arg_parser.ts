@@ -1,6 +1,6 @@
-import { expect } from '@std/expect';
-import { describe, test } from '@std/testing/bdd';
-import { assertMappingEquals } from './helpers.ts';
+import { expect } from 'expect';
+import { describe, test } from 'node:test';
+import { assertMappingEquals } from './helpers.js';
 
 import { ArgParser } from '../src/arg_parser.ts';
 import { ParserConfig } from '../src/parser_config.ts';
