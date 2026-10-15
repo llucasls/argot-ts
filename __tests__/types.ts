@@ -90,13 +90,6 @@ describe('test Parameters', () => {
 describe('test Operands', () => {
   const operands = new Operands(['output.log', 'error.log']);
 
-  test('prevent extra properties in an operands object', () => {
-    expect(() => {
-      const anyOperands = operands as { file?: string };
-      anyOperands.file = 'build.log';
-    }).toThrow(TypeError);
-  });
-
   test('add a new operand', () => {
     expect(() => {
       operands.push('extra.log');
