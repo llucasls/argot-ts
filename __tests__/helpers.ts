@@ -26,5 +26,4 @@ export function assertMappingEquals<K extends PropertyKey, V>(
   }
 
   assertEquals(actualObj, expected, msg ?? 'Values are not equal');
-  //assertEquals(actualObj, expected, msg);
 }
