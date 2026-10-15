@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "pretest": "npm run buildTest",
-    "test": "node --test",
-    "coverage": "deno test --allow-read=__tests__ --allow-env --coverage",
+    "test": "node --test --enable-source-maps",
+    "coverage": "npm run buildTest && node --experimental-test-coverage --test",
     "build": "tsc && esbuild --minify --outdir=dist --packages=external --platform=node --allow-overwrite ./dist/**/*.js",
-    "buildTest": "esbuild --outdir=test --packages=external --platform=node __tests__/**/*.ts",
+    "buildTest": "esbuild --outdir=test --packages=external --platform=node --sourcemap __tests__/**/*.ts",
     "clean": "rm -rf ./dist/",
     "prepare": "npm run clean && npm run build",
     "prepack": "mv README.md github.md && cp npm.md README.md",
