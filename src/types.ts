@@ -211,20 +211,6 @@ abstract class ResultList<T> extends Array<T> {
     for (let i = 0; i < length; i++) {
       this[i] = (args as T[])[i]!;
     }
-
-    return new Proxy(this, {
-      set(target, prop, value) {
-        if (prop === 'length') {
-          target[prop] = value;
-          return true;
-        } else if (String(Number(prop)) === prop) {
-          target[Number(prop)] = value;
-          return true;
-        }
-
-        throw new TypeError(`Cannot add non-index property: ${String(prop)}`);
-      }
-    });
   }
 }
 

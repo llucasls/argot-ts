@@ -1,6 +1,6 @@
-import { expect } from '@std/expect';
-import { describe, test } from '@std/testing/bdd';
-import { assertMappingEquals } from './helpers.ts';
+import { expect } from 'expect';
+import { describe, test } from 'node:test';
+import { assertMappingEquals } from './helpers.js';
 
 import { ArgParser } from '../src/arg_parser.ts';
 import { ParserConfig } from '../src/parser_config.ts';
@@ -78,6 +78,37 @@ describe('test ArgParser', () => {
     }).toThrow(TypeError);
     expect(() => {
       parser.parse([1, 2] as unknown as string[]);
+    }).toThrow(TypeError);
+  });
+
+  test('ensure returned operands are immutable', () => {
+    const { operands } = parser.parse(['deny', 'mutability']);
+    expect(() => {
+      operands.push('hold-on');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure returned parameters are immutable', () => {
+    const { parameters } = parser.parse(['mutable=no']);
+    expect(() => {
+      parameters?.set('mutable', 'yes');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure returned options are immutable', () => {
+    const { options } = parser.parse(['--strict']);
+    expect(() => {
+      options.delete('strict');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure parsed results are immutable', () => {
+    const result = parser.parse(['-s', 'run', 'server.js', 'PORT=5000']);
+    expect(() => {
+      (result as any).env = { log: 'server.log' };
+    }).toThrow(TypeError);
+    expect(() => {
+      delete (result as any).options;
     }).toThrow(TypeError);
   });
 

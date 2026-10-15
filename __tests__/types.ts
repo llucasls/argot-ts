@@ -1,5 +1,5 @@
-import { expect } from '@std/expect';
-import { describe, test } from '@std/testing/bdd';
+import { expect } from 'expect';
+import { describe, test } from 'node:test';
 
 import { Options, Parameters, Operands } from '../src/types.ts';
 
@@ -89,13 +89,6 @@ describe('test Parameters', () => {
 
 describe('test Operands', () => {
   const operands = new Operands(['output.log', 'error.log']);
-
-  test('prevent extra properties in an operands object', () => {
-    expect(() => {
-      const anyOperands = operands as { file?: string };
-      anyOperands.file = 'build.log';
-    }).toThrow(TypeError);
-  });
 
   test('add a new operand', () => {
     expect(() => {

@@ -17,7 +17,7 @@
 
 ## v0.3.1 -- 2026-10-15
 
-- Updated documentation to direct users to the npm package.
+- Migrated the primary distribution channel from JSR to npm.
 
 ## v0.3.0 -- 2026-04-23
 - Added new error types for clearer distinction between runtime and
