@@ -81,6 +81,37 @@ describe('test ArgParser', () => {
     }).toThrow(TypeError);
   });
 
+  test('ensure returned operands are immutable', () => {
+    const { operands } = parser.parse(['deny', 'mutability']);
+    expect(() => {
+      operands.push('hold-on');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure returned parameters are immutable', () => {
+    const { parameters } = parser.parse(['mutable=no']);
+    expect(() => {
+      parameters?.set('mutable', 'yes');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure returned options are immutable', () => {
+    const { options } = parser.parse(['--strict']);
+    expect(() => {
+      options.delete('strict');
+    }).toThrow(TypeError);
+  });
+
+  test('ensure parsed results are immutable', () => {
+    const result = parser.parse(['-s', 'run', 'server.js', 'PORT=5000']);
+    expect(() => {
+      (result as any).env = { log: 'server.log' };
+    }).toThrow(TypeError);
+    expect(() => {
+      delete (result as any).options;
+    }).toThrow(TypeError);
+  });
+
   test('produce result with specialized types', () => {
     const result = parser.parse(['--strict', 'CC=clang', 'main.o']);
 
